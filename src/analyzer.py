@@ -10,8 +10,13 @@ import my_torch
 import numpy as np
 
 def execute_train(args):
-    tensor = my_torch.tensor([])
+    tensor1 = my_torch.tensor([[1.1, 2.2], [0.2, 0.4], [4.4, 1.2]], requires_grad=True)
+    tensor2 = my_torch.tensor([[1.4, 2.8], [0.4, 0.9], [4.3, 1.1]])
+    tensor = tensor1 + tensor2
     print(tensor)
+    tensor.backward()
+    print(tensor1.grad)
+    print(tensor2.grad)
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

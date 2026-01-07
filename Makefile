@@ -10,11 +10,11 @@ BUILD_DIR = build
 all: generator analyzer
 
 generator:
-	pyinstaller --onefile --name $(GEN_NAME) --paths . $(GEN_SRC)
+	pyinstaller --onefile --name $(GEN_NAME) --paths . --collect-submodules my_torch $(GEN_SRC)
 	@cp $(DIST_DIR)/$(GEN_NAME) .
 
 analyzer:
-	pyinstaller --onefile --name $(AN_NAME) --paths . $(AN_SRC)
+	pyinstaller --onefile --name $(AN_NAME) --paths . --collect-submodules my_torch $(AN_SRC)
 	@cp $(DIST_DIR)/$(AN_NAME) .
 
 clean:

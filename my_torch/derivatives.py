@@ -34,3 +34,11 @@ def sub_backward(tensors: Any, grad_outputs: Any) -> Any:
     else:
         return -grad_outputs[0]
     return grad_outputs[0]
+
+def neg_backward(tensors: Any, grad_outputs: Any) -> Any:
+    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
+        tensors[0].grad = -grad_outputs[0] if isinstance(grad_outputs[0], (int, float)) else -grad_outputs[0].data
+        tensors[0].backward(tensors[0].grad)
+    else:
+        return -grad_outputs[0] if isinstance(grad_outputs[0], (int, float)) else -grad_outputs[0].data
+    return grad_outputs[0]

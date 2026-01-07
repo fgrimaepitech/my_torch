@@ -1,6 +1,6 @@
 """
 Tests comparing my_torch operators with PyTorch operators.
-Tests mul, rmul, and add operations.
+Tests mul, rmul, add, sub, and neg operations.
 """
 import unittest
 import numpy as np
@@ -14,7 +14,7 @@ import my_torch
 
 
 class TestOperators(unittest.TestCase):
-    """Test operators: mul, rmul, and add"""
+    """Test operators: mul, rmul, add, sub, and neg"""
     
     def setUp(self):
         """Set up test fixtures"""
@@ -43,342 +43,224 @@ class TestOperators(unittest.TestCase):
     def test_mul_tensor_tensor_1d(self):
         """Test tensor * tensor for 1D tensors"""
         # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
         b = my_torch.tensor([4.0, 5.0, 6.0])
         result = a * b
+        result.backward()
+        print(a.grad)
+        print(b.grad)
         
         # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
         b_torch = torch.tensor([4.0, 5.0, 6.0])
         result_torch = a_torch * b_torch
-        
-        self.assert_tensors_close(result, result_torch, "1D tensor * tensor")
-    
-    def test_mul_tensor_tensor_2d(self):
-        """Test tensor * tensor for 2D tensors"""
+        result_torch.sum().backward()
+        print(a_torch.grad)
+        print(b_torch.grad)
+        self.assert_tensors_close(a.grad, a_torch.grad, "1D tensor * tensor")
+
+    def test_rmul_tensor_scalar(self):
+        """Test scalar * tensor"""
         # my_torch
-        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]])
-        result = a * b
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result = 2 * a
+        result.backward()
+        print(a.grad)
         
         # PyTorch
-        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-        b_torch = torch.tensor([[5.0, 6.0], [7.0, 8.0]])
-        result_torch = a_torch * b_torch
-        
-        self.assert_tensors_close(result, result_torch, "2D tensor * tensor")
-    
-    def test_mul_tensor_scalar(self):
-        """Test tensor * scalar"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a * 2.5
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch * 2.5
-        
-        self.assert_tensors_close(result, result_torch, "tensor * scalar")
-    
-    def test_mul_tensor_int(self):
-        """Test tensor * integer"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a * 3
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch * 3
-        
-        self.assert_tensors_close(result, result_torch, "tensor * int")
-    
-    def test_mul_tensor_zero(self):
-        """Test tensor * 0"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a * 0
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch * 0
-        
-        self.assert_tensors_close(result, result_torch, "tensor * 0")
-    
-    def test_mul_tensor_negative(self):
-        """Test tensor * negative scalar"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a * -2.0
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch * -2.0
-        
-        self.assert_tensors_close(result, result_torch, "tensor * negative")
-    
-    # ========== RMUL TESTS ==========
-    
-    def test_rmul_scalar_tensor(self):
-        """Test scalar * tensor (right multiplication)"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = 2.5 * a
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = 2.5 * a_torch
-        
-        self.assert_tensors_close(result, result_torch, "scalar * tensor")
-    
-    def test_rmul_int_tensor(self):
-        """Test integer * tensor"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = 3 * a
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = 3 * a_torch
-        
-        self.assert_tensors_close(result, result_torch, "int * tensor")
-    
-    def test_rmul_zero_tensor(self):
-        """Test 0 * tensor"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = 0 * a
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = 0 * a_torch
-        
-        self.assert_tensors_close(result, result_torch, "0 * tensor")
-    
-    def test_rmul_negative_tensor(self):
-        """Test negative scalar * tensor"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = -2.0 * a
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = -2.0 * a_torch
-        
-        self.assert_tensors_close(result, result_torch, "negative * tensor")
-    
-    def test_rmul_tensor_2d(self):
-        """Test scalar * 2D tensor"""
-        # my_torch
-        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-        result = 2.0 * a
-        
-        # PyTorch
-        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-        result_torch = 2.0 * a_torch
-        
-        self.assert_tensors_close(result, result_torch, "scalar * 2D tensor")
-    
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result_torch = 2 * a_torch
+        result_torch.sum().backward()
+        print(a_torch.grad)
+        self.assert_tensors_close(a.grad, a_torch.grad, "scalar * tensor")
+
     # ========== ADD TESTS ==========
     
     def test_add_tensor_tensor_1d(self):
         """Test tensor + tensor for 1D tensors"""
         # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        b = my_torch.tensor([4.0, 5.0, 6.0])
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b = my_torch.tensor([4.0, 5.0, 6.0], requires_grad=True)
         result = a + b
+        result.backward()
         
         # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        b_torch = torch.tensor([4.0, 5.0, 6.0])
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b_torch = torch.tensor([4.0, 5.0, 6.0], requires_grad=True)
         result_torch = a_torch + b_torch
+        result_torch.sum().backward()
         
-        self.assert_tensors_close(result, result_torch, "1D tensor + tensor")
-    
-    def test_add_tensor_tensor_2d(self):
-        """Test tensor + tensor for 2D tensors"""
-        # my_torch
-        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]])
-        result = a + b
-        
-        # PyTorch
-        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-        b_torch = torch.tensor([[5.0, 6.0], [7.0, 8.0]])
-        result_torch = a_torch + b_torch
-        
-        self.assert_tensors_close(result, result_torch, "2D tensor + tensor")
+        self.assert_tensors_close(result, result_torch, "1D tensor + tensor forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "1D tensor + tensor grad a")
+        self.assert_tensors_close(b.grad, b_torch.grad, "1D tensor + tensor grad b")
     
     def test_add_tensor_scalar(self):
         """Test tensor + scalar"""
         # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a + 2.5
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result = a + 2.0
+        result.backward()
         
         # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch + 2.5
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result_torch = a_torch + 2.0
+        result_torch.sum().backward()
         
-        self.assert_tensors_close(result, result_torch, "tensor + scalar")
+        self.assert_tensors_close(result, result_torch, "tensor + scalar forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "tensor + scalar grad")
     
-    def test_add_tensor_int(self):
-        """Test tensor + integer"""
+    def test_add_tensor_tensor_2d(self):
+        """Test tensor + tensor for 2D tensors"""
         # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a + 3
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch + 3
-        
-        self.assert_tensors_close(result, result_torch, "tensor + int")
-    
-    def test_add_tensor_zero(self):
-        """Test tensor + 0"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a + 0
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch + 0
-        
-        self.assert_tensors_close(result, result_torch, "tensor + 0")
-    
-    def test_add_tensor_negative(self):
-        """Test tensor + negative scalar"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a + (-2.0)
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch + (-2.0)
-        
-        self.assert_tensors_close(result, result_torch, "tensor + negative")
-    
-    def test_add_float_values(self):
-        """Test addition with float values"""
-        # my_torch
-        a = my_torch.tensor([0.1, 0.2, 0.3])
-        b = my_torch.tensor([0.4, 0.5, 0.6])
+        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
         result = a + b
+        result.backward()
         
         # PyTorch
-        a_torch = torch.tensor([0.1, 0.2, 0.3])
-        b_torch = torch.tensor([0.4, 0.5, 0.6])
+        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b_torch = torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
         result_torch = a_torch + b_torch
+        result_torch.sum().backward()
         
-        self.assert_tensors_close(result, result_torch, "float addition")
-
+        self.assert_tensors_close(result, result_torch, "2D tensor + tensor forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "2D tensor + tensor grad a")
+        self.assert_tensors_close(b.grad, b_torch.grad, "2D tensor + tensor grad b")
+    
     # ========== SUB TESTS ==========
-
+    
     def test_sub_tensor_tensor_1d(self):
         """Test tensor - tensor for 1D tensors"""
         # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        b = my_torch.tensor([4.0, 5.0, 6.0])
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b = my_torch.tensor([4.0, 5.0, 6.0], requires_grad=True)
         result = a - b
+        result.backward()
         
         # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        b_torch = torch.tensor([4.0, 5.0, 6.0])
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b_torch = torch.tensor([4.0, 5.0, 6.0], requires_grad=True)
         result_torch = a_torch - b_torch
+        result_torch.sum().backward()
         
-        self.assert_tensors_close(result, result_torch, "1D tensor - tensor")
-    
-    def test_sub_tensor_tensor_2d(self):
-        """Test tensor - tensor for 2D tensors"""
-        # my_torch
-        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]])
-        result = a - b
-        
-        # PyTorch
-        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
-        b_torch = torch.tensor([[5.0, 6.0], [7.0, 8.0]])
-        result_torch = a_torch - b_torch
-
-        self.assert_tensors_close(result, result_torch, "2D tensor - tensor")
+        self.assert_tensors_close(result, result_torch, "1D tensor - tensor forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "1D tensor - tensor grad a")
+        self.assert_tensors_close(b.grad, b_torch.grad, "1D tensor - tensor grad b")
     
     def test_sub_tensor_scalar(self):
         """Test tensor - scalar"""
         # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a - 2.5
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result = a - 2.0
+        result.backward()
         
         # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch - 2.5
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result_torch = a_torch - 2.0
+        result_torch.sum().backward()
         
-        self.assert_tensors_close(result, result_torch, "tensor - scalar")
+        self.assert_tensors_close(result, result_torch, "tensor - scalar forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "tensor - scalar grad")
     
-    def test_sub_tensor_int(self):
-        """Test tensor - integer"""
+    def test_sub_tensor_tensor_2d(self):
+        """Test tensor - tensor for 2D tensors"""
         # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a - 3
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch - 3
-        
-        self.assert_tensors_close(result, result_torch, "tensor - int")
-    
-    def test_sub_tensor_zero(self):
-        """Test tensor - 0"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a - 0
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch - 0
-        
-        self.assert_tensors_close(result, result_torch, "tensor - 0")
-    
-    def test_sub_tensor_negative(self):
-        """Test tensor - negative scalar"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        result = a - (-2.0)
-        
-        # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        result_torch = a_torch - (-2.0)
-        
-        self.assert_tensors_close(result, result_torch, "tensor - negative")
-    
-    def test_sub_float_values(self):
-        """Test subtraction with float values"""
-        # my_torch
-        a = my_torch.tensor([0.1, 0.2, 0.3])
-        b = my_torch.tensor([0.4, 0.5, 0.6])
+        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
         result = a - b
+        result.backward()
         
         # PyTorch
-        a_torch = torch.tensor([0.1, 0.2, 0.3])
-        b_torch = torch.tensor([0.4, 0.5, 0.6])
+        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b_torch = torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
         result_torch = a_torch - b_torch
+        result_torch.sum().backward()
         
-        self.assert_tensors_close(result, result_torch, "float subtraction")
-
-    # ========== COMBINED OPERATIONS ==========
+        self.assert_tensors_close(result, result_torch, "2D tensor - tensor forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "2D tensor - tensor grad a")
+        self.assert_tensors_close(b.grad, b_torch.grad, "2D tensor - tensor grad b")
     
-    def test_combined_operations(self):
-        """Test combined operations: (a * b) + c"""
+    # ========== NEG TESTS ==========
+    
+    def test_neg_tensor_1d(self):
+        """Test -tensor for 1D tensors"""
         # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0])
-        b = my_torch.tensor([2.0, 3.0, 4.0])
-        c = my_torch.tensor([1.0, 1.0, 1.0])
-        result = (a * b) + c
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result = -a
+        result.backward()
         
         # PyTorch
-        a_torch = torch.tensor([1.0, 2.0, 3.0])
-        b_torch = torch.tensor([2.0, 3.0, 4.0])
-        c_torch = torch.tensor([1.0, 1.0, 1.0])
-        result_torch = (a_torch * b_torch) + c_torch
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result_torch = -a_torch
+        result_torch.sum().backward()
         
-        self.assert_tensors_close(result, result_torch, "combined operations")
+        self.assert_tensors_close(result, result_torch, "1D -tensor forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "1D -tensor grad")
+    
+    def test_neg_tensor_2d(self):
+        """Test -tensor for 2D tensors"""
+        # my_torch
+        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        result = -a
+        result.backward()
+        
+        # PyTorch
+        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        result_torch = -a_torch
+        result_torch.sum().backward()
+        
+        self.assert_tensors_close(result, result_torch, "2D -tensor forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "2D -tensor grad")
+    
+    def test_neg_tensor_negative_values(self):
+        """Test -tensor with negative values"""
+        # my_torch
+        a = my_torch.tensor([-1.0, -2.0, 3.0], requires_grad=True)
+        result = -a
+        result.backward()
+        
+        # PyTorch
+        a_torch = torch.tensor([-1.0, -2.0, 3.0], requires_grad=True)
+        result_torch = -a_torch
+        result_torch.sum().backward()
+        
+        self.assert_tensors_close(result, result_torch, "-tensor with negative values forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "-tensor with negative values grad")
+    
+    # ========== MUL ADDITIONAL TESTS ==========
+    
+    def test_mul_tensor_scalar(self):
+        """Test tensor * scalar"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result = a * 2.0
+        result.backward()
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result_torch = a_torch * 2.0
+        result_torch.sum().backward()
+        
+        self.assert_tensors_close(result, result_torch, "tensor * scalar forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "tensor * scalar grad")
+    
+    def test_mul_tensor_tensor_2d(self):
+        """Test tensor * tensor for 2D tensors"""
+        # my_torch
+        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
+        result = a * b
+        result.backward()
+        
+        # PyTorch
+        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b_torch = torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
+        result_torch = a_torch * b_torch
+        result_torch.sum().backward()
+        
+        self.assert_tensors_close(result, result_torch, "2D tensor * tensor forward")
+        self.assert_tensors_close(a.grad, a_torch.grad, "2D tensor * tensor grad a")
+        self.assert_tensors_close(b.grad, b_torch.grad, "2D tensor * tensor grad b")
 
 
 if __name__ == '__main__':

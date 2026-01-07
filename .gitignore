@@ -6,3 +6,6 @@ my_torch_generator
 my_torch_analyzer
 *.spec
 *.pyc
+dataset/
+.DS_Store
+./*/.DS_Store

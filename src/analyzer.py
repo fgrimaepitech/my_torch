@@ -6,6 +6,13 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+import my_torch
+import numpy as np
+
+def execute_train(args):
+    tensor = my_torch.tensor([])
+    print(tensor)
+
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")
     exec_mode = parser.add_mutually_exclusive_group(required=True)
@@ -33,7 +40,7 @@ def main():
     if args.save and not args.train:
         parser.error("--save can only be used together with --train")
 
-    print('args: ', args.train, args.predict, args.save, args.LOADFILE, args.CHESSFILE)
+    execute_train(args)
 
 if __name__ == "__main__":
     main()

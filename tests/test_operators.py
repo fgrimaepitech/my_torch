@@ -47,16 +47,12 @@ class TestOperators(unittest.TestCase):
         b = my_torch.tensor([4.0, 5.0, 6.0])
         result = a * b
         result.backward()
-        print(a.grad)
-        print(b.grad)
         
         # PyTorch
         a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
         b_torch = torch.tensor([4.0, 5.0, 6.0])
         result_torch = a_torch * b_torch
         result_torch.sum().backward()
-        print(a_torch.grad)
-        print(b_torch.grad)
         self.assert_tensors_close(a.grad, a_torch.grad, "1D tensor * tensor")
 
     def test_rmul_tensor_scalar(self):
@@ -65,13 +61,11 @@ class TestOperators(unittest.TestCase):
         a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result = 2 * a
         result.backward()
-        print(a.grad)
         
         # PyTorch
         a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result_torch = 2 * a_torch
         result_torch.sum().backward()
-        print(a_torch.grad)
         self.assert_tensors_close(a.grad, a_torch.grad, "scalar * tensor")
 
     # ========== ADD TESTS ==========
@@ -262,6 +256,48 @@ class TestOperators(unittest.TestCase):
         self.assert_tensors_close(a.grad, a_torch.grad, "2D tensor * tensor grad a")
         self.assert_tensors_close(b.grad, b_torch.grad, "2D tensor * tensor grad b")
 
+    # ========== TRUEDIV TESTS ==========
+    def test_truediv_tensor_tensor_1d(self):
+        """Test tensor / tensor for 1D tensors"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b = my_torch.tensor([4.0, 5.0, 6.0])
+        result = a / b
+        result.backward()
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b_torch = torch.tensor([4.0, 5.0, 6.0])
+        result_torch = a_torch / b_torch
+        result_torch.sum().backward()
+        self.assert_tensors_close(a.grad, a_torch.grad, "1D tensor / tensor grad a")
+
+    def test_truediv_tensor_scalar(self):
+        """Test tensor / scalar"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result = a / 2.0
+        result.backward()
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result_torch = a_torch / 2.0
+        result_torch.sum().backward()
+        self.assert_tensors_close(a.grad, a_torch.grad, "tensor / scalar grad")
+
+    # ========== RTRUEDIV TESTS ==========
+    def test_rtruediv_scalar_tensor(self):
+        """Test scalar / tensor"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result = 2.0 / a
+        result.backward()
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        result_torch = 2.0 / a_torch
+        result_torch.sum().backward()
+        self.assert_tensors_close(a.grad, a_torch.grad, "scalar / tensor grad")
 
 if __name__ == '__main__':
     unittest.main()

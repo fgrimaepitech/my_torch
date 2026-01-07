@@ -37,6 +37,14 @@ class Tensor:
     def __neg__(self) -> 'Tensor':
         return Tensor(isinstance(self.data, (int, float)) -self.data if isinstance(self.data, (int, float)) else -self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.neg_backward, [self]))
 
+    def __truediv__(self, other: Union[int, float, 'Tensor']) -> 'Tensor':
+        return Tensor(self.data / (other if isinstance(other, (int, float)) else other.data), requires_grad=self.requires_grad, grad_fn=Function(dv.truediv_backward, [self, other]))
+
+    def __rtruediv__(self, other: Union[int, float]) -> 'Tensor':
+        return Tensor(other / self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.truediv_backward, [other, self]))
+
+    
+
     def backward(self, grad_outputs: Optional[Tensor] = None):
         if grad_outputs is None:
             grad_outputs = Tensor(np.ones_like(self.data))

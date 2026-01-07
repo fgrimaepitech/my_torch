@@ -1,0 +1,8 @@
+bin/
+build/
+dist/
+my_torch/__pycache__/
+my_torch_generator
+my_torch_analyzer
+*.spec
+*.pyc

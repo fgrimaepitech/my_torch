@@ -31,6 +31,9 @@ class Tensor:
     def __add__(self, other: Union[int, float, 'Tensor']) -> 'Tensor':
         return Tensor(self.data + (other if isinstance(other, (int, float)) else other.data), requires_grad=self.requires_grad, grad_fn=Function(dv.add_backward, [self, other]))
 
+    def __sub__(self, other: Union[int, float, 'Tensor']) -> 'Tensor':
+        return Tensor(self.data - (other if isinstance(other, (int, float)) else other.data), requires_grad=self.requires_grad, grad_fn=Function(dv.sub_backward, [self, other]))
+
     def backward(self, grad_outputs: Optional[Tensor] = None):
         if grad_outputs is None:
             grad_outputs = Tensor(np.ones_like(self.data))

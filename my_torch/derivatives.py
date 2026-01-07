@@ -23,3 +23,14 @@ def add_backward(tensors: Any, grad_outputs: Any) -> Any:
     else:
         return grad_outputs[0]
     return grad_outputs[0]
+
+def sub_backward(tensors: Any, grad_outputs: Any) -> Any:
+    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
+        tensors[0].grad = grad_outputs[0]
+        tensors[0].backward(tensors[0].grad)
+    if isinstance(tensors[1], ts.Tensor) and tensors[1].requires_grad:
+        tensors[1].grad = -grad_outputs[0]
+        tensors[1].backward(tensors[1].grad)
+    else:
+        return -grad_outputs[0]
+    return grad_outputs[0]

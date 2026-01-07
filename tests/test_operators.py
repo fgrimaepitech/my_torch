@@ -269,7 +269,99 @@ class TestOperators(unittest.TestCase):
         result_torch = a_torch + b_torch
         
         self.assert_tensors_close(result, result_torch, "float addition")
+
+    # ========== SUB TESTS ==========
+
+    def test_sub_tensor_tensor_1d(self):
+        """Test tensor - tensor for 1D tensors"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0])
+        b = my_torch.tensor([4.0, 5.0, 6.0])
+        result = a - b
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0])
+        b_torch = torch.tensor([4.0, 5.0, 6.0])
+        result_torch = a_torch - b_torch
+        
+        self.assert_tensors_close(result, result_torch, "1D tensor - tensor")
     
+    def test_sub_tensor_tensor_2d(self):
+        """Test tensor - tensor for 2D tensors"""
+        # my_torch
+        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]])
+        result = a - b
+        
+        # PyTorch
+        a_torch = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+        b_torch = torch.tensor([[5.0, 6.0], [7.0, 8.0]])
+        result_torch = a_torch - b_torch
+
+        self.assert_tensors_close(result, result_torch, "2D tensor - tensor")
+    
+    def test_sub_tensor_scalar(self):
+        """Test tensor - scalar"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0])
+        result = a - 2.5
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0])
+        result_torch = a_torch - 2.5
+        
+        self.assert_tensors_close(result, result_torch, "tensor - scalar")
+    
+    def test_sub_tensor_int(self):
+        """Test tensor - integer"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0])
+        result = a - 3
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0])
+        result_torch = a_torch - 3
+        
+        self.assert_tensors_close(result, result_torch, "tensor - int")
+    
+    def test_sub_tensor_zero(self):
+        """Test tensor - 0"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0])
+        result = a - 0
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0])
+        result_torch = a_torch - 0
+        
+        self.assert_tensors_close(result, result_torch, "tensor - 0")
+    
+    def test_sub_tensor_negative(self):
+        """Test tensor - negative scalar"""
+        # my_torch
+        a = my_torch.tensor([1.0, 2.0, 3.0])
+        result = a - (-2.0)
+        
+        # PyTorch
+        a_torch = torch.tensor([1.0, 2.0, 3.0])
+        result_torch = a_torch - (-2.0)
+        
+        self.assert_tensors_close(result, result_torch, "tensor - negative")
+    
+    def test_sub_float_values(self):
+        """Test subtraction with float values"""
+        # my_torch
+        a = my_torch.tensor([0.1, 0.2, 0.3])
+        b = my_torch.tensor([0.4, 0.5, 0.6])
+        result = a - b
+        
+        # PyTorch
+        a_torch = torch.tensor([0.1, 0.2, 0.3])
+        b_torch = torch.tensor([0.4, 0.5, 0.6])
+        result_torch = a_torch - b_torch
+        
+        self.assert_tensors_close(result, result_torch, "float subtraction")
+
     # ========== COMBINED OPERATIONS ==========
     
     def test_combined_operations(self):

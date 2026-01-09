@@ -59,3 +59,13 @@ def truediv_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[1].grad = -grad_outputs[0] * tensors[0].data / (tensors[1].data ** 2)
         tensors[1].backward(tensors[1].grad)
     return grad_outputs[0]
+
+def matmul_backward(tensors: Any, grad_outputs: Any) -> Any:
+    grad_data = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
+        tensors[0].grad = grad_data @ tensors[1].data.T
+        tensors[0].backward(tensors[0].grad)
+    if isinstance(tensors[1], ts.Tensor) and tensors[1].requires_grad:
+        tensors[1].grad = tensors[0].data.T @ grad_data
+        tensors[1].backward(tensors[1].grad)
+    return grad_data @ tensors[1].data.T

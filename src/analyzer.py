@@ -8,17 +8,13 @@ if PROJECT_ROOT not in sys.path:
 
 import my_torch
 import numpy as np
+import torch
 
 def execute_train(args):
-    tensor1 = my_torch.tensor([[1.1, 2.2], [0.2, 0.4], [4.4, 1.2]], requires_grad=True)
-    tensor2 = my_torch.tensor([[1.4, 2.8], [0.4, 0.9], [4.3, 1.1]])
-    print(tensor1)
-    print(tensor2)
-    tensor = tensor1 * tensor2
-    print(tensor)
-    tensor.backward()
-    print(tensor1.grad)
-    print(tensor2.grad)
+    m = my_torch.Linear(20, 30)
+    input = my_torch.tensor(np.random.randn(128, 20))
+    output = m(input)
+    print(output.size())
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

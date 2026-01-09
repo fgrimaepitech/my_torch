@@ -43,7 +43,22 @@ class Tensor:
     def __rtruediv__(self, other: Union[int, float]) -> 'Tensor':
         return Tensor(other / self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.truediv_backward, [other, self]))
 
-    
+    def __matmul__(self, other: 'Tensor') -> 'Tensor':        
+        return Tensor(
+            self.data @ other.data, 
+            requires_grad=self.requires_grad or other.requires_grad,
+            grad_fn=Function(dv.matmul_backward, [self, other])
+        )
+
+    def __rmatmul__(self, other: 'Tensor') -> 'Tensor':
+        return self.__matmul__(other)
+
+    @property
+    def T(self) -> 'Tensor':
+        return Tensor(self.data.T, requires_grad=self.requires_grad)
+
+    def size(self):
+        return self.data.shape
 
     def backward(self, grad_outputs: Optional[Tensor] = None):
         if grad_outputs is None:

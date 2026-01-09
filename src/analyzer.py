@@ -11,12 +11,12 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    x = torch.randn(3, 3)
+    x = torch.tensor([[1, 2, 3], [4, 5, 6]]).sum()
     print(x)
-    t = torch.as_strided(x, (2, 2), (1, 2))
-    print(t)
-    t = torch.as_strided(x, (2, 2), (1, 2), 1)
-    print(t)
+    m = my_torch.Tensor([[1, 2, 3], [4, 5, 6]])
+    m = m.sum()
+    print(m.data)
+
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

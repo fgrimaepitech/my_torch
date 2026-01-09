@@ -61,6 +61,12 @@ class Tensor:
     def size(self):
         return self.data.shape
 
+    def sum(self, dim: Optional[int] = None) -> 'Tensor':
+        result = np.sum(self.data, axis=dim)
+        if not isinstance(result, np.ndarray):
+            result = np.array(result)
+        return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.sum_backward, [self, dim]))
+
     @staticmethod
     def randn(*args, **kwargs):
         return Tensor(np.random.randn(*args, **kwargs), requires_grad=False)

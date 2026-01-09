@@ -53,12 +53,17 @@ class Tensor:
     def __rmatmul__(self, other: 'Tensor') -> 'Tensor':
         return self.__matmul__(other)
 
+
     @property
     def T(self) -> 'Tensor':
         return Tensor(self.data.T, requires_grad=self.requires_grad)
 
     def size(self):
         return self.data.shape
+
+    @staticmethod
+    def randn(*args, **kwargs):
+        return Tensor(np.random.randn(*args, **kwargs), requires_grad=False)
 
     def backward(self, grad_outputs: Optional[Tensor] = None):
         if grad_outputs is None:

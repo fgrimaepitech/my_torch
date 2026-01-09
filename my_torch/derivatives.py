@@ -72,6 +72,6 @@ def matmul_backward(tensors: Any, grad_outputs: Any) -> Any:
 
 def max_backward(tensors: Any, grad_outputs: Any) -> Any:
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
-        tensors[0].grad = grad_outputs[0] * (tensors[0].data > 0)
+        tensors[0].grad = grad_outputs[0] * (tensors[0].data > tensors[1])
         tensors[0].backward(tensors[0].grad)
-    return grad_outputs[0] * (tensors[0].data > 0)
+    return grad_outputs[0] * (tensors[0].data > tensors[1])

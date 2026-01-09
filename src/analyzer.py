@@ -11,14 +11,12 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    m = my_torch.ReLU()
-    input = my_torch.Tensor.randn(2).requires_grad_(True)
-    output = m(input)
-    print("using my_torch: ", output)
-    m_torch = torch.nn.ReLU()
-    input_torch = torch.randn(2).requires_grad_(True)
-    output_torch = m_torch(input_torch)
-    print("using torch: ", output_torch)
+    x = torch.randn(3, 3)
+    print(x)
+    t = torch.as_strided(x, (2, 2), (1, 2))
+    print(t)
+    t = torch.as_strided(x, (2, 2), (1, 2), 1)
+    print(t)
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

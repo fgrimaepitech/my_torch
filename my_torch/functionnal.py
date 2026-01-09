@@ -14,6 +14,13 @@ def as_strided(tensor: Tensor, shape: tuple, strides: tuple, storage_offset: int
 
     itemsize = np_array.itemsize
     byte_strides = tuple(s * itemsize for s in strides)
+    
+    if storage_offset > 0:
+        flat_array = np_array.flatten()
+        if storage_offset >= len(flat_array):
+            raise ValueError(f"storage_offset {storage_offset} is out of bounds for array of size {len(flat_array)}")
+        offset_array = flat_array[storage_offset:]
+        np_array = offset_array
 
     strided_data = np_stride_tricks.as_strided(
         np_array,

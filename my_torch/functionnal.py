@@ -29,3 +29,9 @@ def as_strided(tensor: Tensor, shape: tuple, strides: tuple, storage_offset: int
     )
 
     return Tensor(strided_data, requires_grad=tensor.requires_grad, grad_fn=Function(dv.as_strided_backward, [tensor, shape, strides, storage_offset]))
+
+def trace(tensor: Tensor) -> Tensor:
+    result = np.trace(tensor.data)
+    if not isinstance(result, np.ndarray):
+        result = np.array(result)
+    return Tensor(result, requires_grad=tensor.requires_grad, grad_fn=Function(dv.trace_backward, [tensor]))

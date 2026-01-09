@@ -92,3 +92,9 @@ def as_strided_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[0].grad = np.lib.stride_tricks.as_strided(grad_outputs[0], shape=tensors[0].data.shape, strides=tensors[1].data.strides, storage_offset=tensors[2].data)
         tensors[0].backward(tensors[0].grad)
     return grad_outputs[0]
+
+def trace_backward(tensors: Any, grad_outputs: Any) -> Any:
+    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
+        tensors[0].grad = np.trace(grad_outputs[0])
+        tensors[0].backward(tensors[0].grad)
+    return np.trace(grad_outputs[0])

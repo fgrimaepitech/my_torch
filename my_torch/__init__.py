@@ -3,7 +3,7 @@ from .tensor import Tensor, tensor
 from .neural_network import Module
 
 # Functionnal
-from .functionnal import max, as_strided
+from .functionnal import max, as_strided, trace
 
 # Layers
 from .layers.linear import Linear

@@ -11,18 +11,11 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    x = torch.tensor([[1, 2, 3], [4, 5, 6]]).sum()
+    tensor = my_torch.trace(my_torch.Tensor([[1, 2, 3], [4, 5, 6]]))
+    x = torch.trace(torch.tensor([[1, 2, 3], [4, 5, 6]]))
+    m = my_torch.trace(my_torch.Tensor([[1, 2, 3], [4, 5, 6]]))
     print(x)
-    m = my_torch.Tensor([[1, 2, 3], [4, 5, 6]])
-    m = m.sum()
-    print(m.data)
-    print("as strided tests: ")
-    x = torch.tensor([[1, 2, 3], [4, 5, 6]])
-    t = my_torch.Tensor([[1, 2, 3], [4, 5, 6]])
-    m_x = torch.as_strided(x, (2, 2), (1, 2))
-    m_t = my_torch.as_strided(t, (2, 2), (1, 2))
-    print("pytorch strided:",m_x)
-    print("my torch strided:",m_t)
+    print(m)
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

@@ -15,10 +15,16 @@ class Linear(Module):
             self.bias = None
 
     def forward(self, x):
-        return x @ self.weight.T + self.bias
+        result = x @ self.weight.T
+        if self.bias is not None:
+            result = result + self.bias
+        return result
 
     def parameters(self):
-        return [self.weight, self.bias]
+        params = [self.weight]
+        if self.bias is not None:
+            params.append(self.bias)
+        return params
 
     def extra_repr(self):
         return f"in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}"

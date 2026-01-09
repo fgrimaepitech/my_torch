@@ -86,3 +86,9 @@ def sum_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[0].grad = np.broadcast_to(grad_data, tensors[0].data.shape).copy()
         tensors[0].backward(tensors[0].grad)
     return grad_data
+
+def as_strided_backward(tensors: Any, grad_outputs: Any) -> Any:
+    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
+        tensors[0].grad = np.lib.stride_tricks.as_strided(grad_outputs[0], shape=tensors[0].data.shape, strides=tensors[1].data.strides, storage_offset=tensors[2].data)
+        tensors[0].backward(tensors[0].grad)
+    return grad_outputs[0]

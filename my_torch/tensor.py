@@ -10,13 +10,20 @@ class Tensor:
     """
     def __init__(self, data: Union[np.ndarray, list, tuple], requires_grad: bool = False, grad_fn: Optional["Function"] = None):
         assert isinstance(data, (np.ndarray, list, tuple)), "data must be a numpy array, list, or tuple"
-        self.data = np.array(data)
+        if isinstance(data, (list, tuple)):
+            if all(isinstance(x, (int, np.integer)) for row in data for x in (row if isinstance(row, (list, tuple)) else [row])):
+                self.data = np.array(data, dtype=np.int64)
+            else:
+                self.data = np.array(data, dtype=np.float64)
+        else:
+            self.data = np.array(data)
         self.requires_grad = requires_grad
         self.grad_fn = grad_fn
         self.grad = None
 
     def __str__(self):
-        return f"tensor({str(self.data)}, requires_grad={self.requires_grad})"
+        data_str = np.array2string(self.data, separator=', ', prefix='', suffix='')
+        return f"tensor({data_str}, requires_grad={self.requires_grad})"
 
     def requires_grad_(self, requires_grad: bool = True):
         self.requires_grad = requires_grad

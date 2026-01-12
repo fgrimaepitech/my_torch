@@ -17,6 +17,7 @@ class Tensor:
                 self.data = np.array(data, dtype=np.float64)
         else:
             self.data = np.array(data)
+        self.shape = self.data.shape
         self.requires_grad = requires_grad
         self.grad_fn = grad_fn
         self.grad = None

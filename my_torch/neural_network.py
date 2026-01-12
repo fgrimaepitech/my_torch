@@ -1,6 +1,7 @@
 class Module:
     def __init__(self):
-        self.parameters = []
+        # Avoid naming collision with the parameters() method
+        self._parameters = []
 
     def forward(self, x):
         raise NotImplementedError
@@ -12,4 +13,4 @@ class Module:
         raise NotImplementedError
 
     def parameters(self):
-        return self.parameters
+        return self._parameters

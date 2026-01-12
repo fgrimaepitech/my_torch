@@ -11,18 +11,10 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    conv = my_torch.Conv2d(in_channels=3, out_channels=16, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-    x = my_torch.Tensor(np.random.randn(4, 3, 32, 32))
-    y = conv(x)
-    print(f"Input shape: {x.data.shape}")
-    print(f"Output shape: {y.data.shape}")
-    print(f"Weight shape: {conv.weight.data.shape}")
-    conv_real = torch.nn.Conv2d(in_channels=3, out_channels=16, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
-    x_real = torch.randn(4, 3, 32, 32)
-    y_real = conv_real(x_real)
-    print(f"Input shape: {x_real.shape}")
-    print(f"Output shape: {y_real.shape}")
-    print(f"Weight shape: {conv_real.weight.data.shape}")
+    print("Creating test image...")
+    img_size = 64
+    img = create_simple_test_image(img_size)
+    
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

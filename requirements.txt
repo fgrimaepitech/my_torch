@@ -1,3 +1,5 @@
 pyinstaller
 numpy
 torch
+pillow
+matplotlib

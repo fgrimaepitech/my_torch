@@ -9,3 +9,4 @@ my_torch_analyzer
 dataset/
 .DS_Store
 ./*/.DS_Store
+*.png

@@ -90,3 +90,82 @@ class Conv1d(ConvNd):
         if self.bias is not None:
             params.append(self.bias)
         return params
+
+class Conv2d(Module):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = (1, 1), padding: tuple = (0, 0), bias: bool = True):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
+        self.stride = stride if isinstance(stride, tuple) else (stride, stride)
+        self.padding = padding if isinstance(padding, tuple) else (padding, padding)
+
+        std = np.sqrt(2.0 / (in_channels * self.kernel_size[0] * self.kernel_size[1]))
+        self.weight = Tensor(
+            np.random.randn(out_channels, in_channels, self.kernel_size[0], self.kernel_size[1]) * std,
+            requires_grad=True
+        )
+        if bias:
+            self.bias = Tensor(np.zeros(out_channels), requires_grad=True)
+        else:
+            self.bias = None
+
+    def forward(self, input: Tensor) -> Tensor:
+        if self.padding != (0, 0):
+            input = self._pad2d(input, self.padding)
+
+        print(f"Kernel size: {self.kernel_size}")
+
+        batch_size, in_channels, height, width = input.data.shape
+        kh, kw = self.kernel_size
+        sh, sw = self.stride
+
+        out_height = ((height - kh) // sh) + 1
+        out_width = ((width - kw) // sw) + 1
+
+        windows = self._im2col(input, kh, kw, sh, sw, out_height, out_width)
+
+        weight_reshaped = self.weight.data.reshape(self.out_channels, -1)
+
+        result = np.zeros((batch_size, out_height * out_width, self.out_channels))
+        for b in range(batch_size):
+            result[b] = windows[b] @ weight_reshaped.T
+
+        result = result.transpose(0, 2, 1).reshape(batch_size, self.out_channels, out_height, out_width)
+
+        if self.bias is not None:
+            result += self.bias.data.reshape(1, -1, 1, 1)
+            
+        return Tensor(result, requires_grad=input.requires_grad)
+
+
+    def _pad2d(self, x: Tensor, padding: tuple) -> Tensor:
+        ph, pw = padding
+        batch_size, channels, height, width = x.data.shape
+        if ph == 0 and pw == 0:
+            return x
+        padded_data = np.zeros((batch_size, channels, height + 2*ph, width + 2*pw))
+        padded_data[:, :, ph:ph+height, pw:pw+width] = x.data
+        return Tensor(padded_data, requires_grad=x.requires_grad)
+
+    def _im2col(self, x: Tensor, kh: int, kw: int, sh: int, sw: int, out_height: int, out_width: int):
+        batch_size, channels, height, width = x.data.shape
+        unfolded_data = np.zeros((batch_size, out_height * out_width, channels * kh * kw))
+
+        for b in range(batch_size):
+            col_index = 0;
+            for i in range(out_height):
+                for j in range(out_width):
+                    h_start = i * sh
+                    w_start = j * sw
+                    window = x.data[b, :, h_start:h_start+kh, w_start:w_start+kw]
+                    unfolded_data[b, col_index] = window.ravel()
+                    col_index += 1
+
+        return unfolded_data
+
+    def parameters(self):
+        params = [self.weight]
+        if self.bias is not None:
+            params.append(self.bias)
+        return params

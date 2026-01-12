@@ -11,27 +11,18 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    conv = my_torch.Conv1d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
-
-    x = my_torch.Tensor(np.random.randn(20, 3, 50))
+    conv = my_torch.Conv2d(in_channels=3, out_channels=16, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+    x = my_torch.Tensor(np.random.randn(4, 3, 32, 32))
     y = conv(x)
     print(f"Input shape: {x.data.shape}")
     print(f"Output shape: {y.data.shape}")
     print(f"Weight shape: {conv.weight.data.shape}")
-    print(f"Bias shape: {conv.bias.data.shape if conv.bias is not None else None}")
-    
-    # Check parameters
-    print(f"Number of parameters: {sum(p.data.size for p in conv.parameters())}")
-
-    conv_real = torch.nn.Conv1d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
-    x_real = torch.randn(20, 3, 50)
+    conv_real = torch.nn.Conv2d(in_channels=3, out_channels=16, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1))
+    x_real = torch.randn(4, 3, 32, 32)
     y_real = conv_real(x_real)
     print(f"Input shape: {x_real.shape}")
     print(f"Output shape: {y_real.shape}")
     print(f"Weight shape: {conv_real.weight.data.shape}")
-    print(f"Bias shape: {conv_real.bias.data.shape if conv_real.bias is not None else None}")
-    # In PyTorch, Tensor.size is a method; use numel() to count parameters
-    print(f"Number of parameters: {sum(p.numel() for p in conv_real.parameters())}")
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

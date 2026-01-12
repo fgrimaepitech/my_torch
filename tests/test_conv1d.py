@@ -302,14 +302,12 @@ class TestConv1d(unittest.TestCase):
         
         # Compare forward outputs
         self.assert_tensors_close(my_output, torch_output, "Conv1d backward forward pass")
+
+        print("baise ta mere")
         
         # Backward pass
         my_output.backward()
         torch_output.sum().backward()
-        
-        # Check if gradients were computed (backward might not be implemented yet)
-        if my_input.grad is None:
-            self.skipTest("Conv1d backward pass not yet implemented - input.grad is None")
         
         # Compare input gradients
         self.assert_tensors_close(my_input.grad, torch_input.grad, "Conv1d backward input grad")
@@ -326,6 +324,7 @@ class TestConv1d(unittest.TestCase):
                 self.assert_tensors_close(my_layer.bias.grad, torch_layer.bias.grad, "Conv1d backward bias grad")
             else:
                 self.skipTest("Conv1d backward pass not yet implemented - bias.grad is None")
+
 
 if __name__ == '__main__':
     unittest.main()

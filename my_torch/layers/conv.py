@@ -1,9 +1,9 @@
+from my_torch.function import Function
 from my_torch.neural_network import Module
 from my_torch.tensor import Tensor
 import numpy as np
 import my_torch.functionnal as F
-
-
+import my_torch.derivatives as dv
 
 class ConvNd(Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int = 1, padding: int = 0, bias: bool = True):
@@ -36,13 +36,13 @@ class Conv1d(ConvNd):
         super().__init__(in_channels, out_channels, kernel_size, stride, padding, bias)
 
     def forward(self, input: Tensor) -> Tensor:
-        if self.padding > 0:
-            input = self._pad1d(input, self.padding)
+        self._input = input
+        self._input_padded = self._pad1d(input, self.padding) if self.padding > 0 else input
 
-        batch_size, in_channels, length = input.data.shape
+        batch_size, in_channels, length = self._input_padded.data.shape
         out_length = ((length - self.kernel_size) // self.stride) + 1
 
-        x_2d = input.data.reshape(-1, length)
+        x_2d = self._input_padded.data.reshape(-1, length)
 
         windows = []
         for i in range(x_2d.shape[0]):
@@ -64,7 +64,7 @@ class Conv1d(ConvNd):
         if self.bias is not None:
             result += self.bias.data.reshape(1, -1, 1)
 
-        return Tensor(result, requires_grad=input.requires_grad)
+        return Tensor(result, requires_grad=input.requires_grad, grad_fn=Function(dv.conv1d_backward, [self._input, self.weight, self.bias]))
 
     def _pad1d(self, input: Tensor, padding: int) -> Tensor:
         batch_size, channels, length = input.data.shape
@@ -85,6 +85,31 @@ class Conv1d(ConvNd):
                 unfolded_data[b, :, c, :] = window.data
 
         return Tensor(unfolded_data, requires_grad=input.requires_grad)
+
+    def _conv_backward(self, tensors, grad_outputs):
+        x, weight, bias = tensors
+        grad_output = grad_outputs[0].data
+
+        grad_x = None
+        grad_weight = None
+        grad_bias = None
+
+        if x.requires_grad:
+            grad_x = self._conv1d_grad_input(grad_output, weight)
+
+        if weight.requires_grad:
+            grad_weight = self._conv1d_grad_weight(grad_output, self._input_padded)
+
+        if bias is not None and bias.requires_grad:
+            grad_bias = grad_output.sum(axis=(0, 2))
+
+        return [grad_x, grad_weight, grad_bias]
+
+    def _conv1d_grad_input(self, grad_output, weight):
+        pass
+
+    def _conv1d_grad_weight(self, grad_output, input_padded):
+        pass
 
     def parameters(self):
         params = [self.weight]

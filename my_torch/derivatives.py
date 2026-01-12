@@ -98,3 +98,26 @@ def trace_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[0].grad = np.trace(grad_outputs[0])
         tensors[0].backward(tensors[0].grad)
     return np.trace(grad_outputs[0])
+
+def conv1d_backward(tensors: Any, grad_outputs: Any) -> Any:
+    x, weight, bias = tensors
+    grad_output = grad_outputs[0].data
+
+    grad_x = None
+    grad_weight = None
+    grad_bias = None
+
+    if x.requires_grad:
+        grad_x = conv1d_grad_input(grad_output, weight)
+    if weight.requires_grad:
+        grad_weight = conv1d_grad_weight(grad_output, x)
+    if bias is not None and bias.requires_grad:
+        grad_bias = grad_output.sum(axis=(0, 2))
+
+    return [grad_x, grad_weight, grad_bias]
+
+def conv1d_grad_input(grad_output, weight):
+    pass
+
+def conv1d_grad_weight(grad_output, x):
+    pass

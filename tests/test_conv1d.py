@@ -303,12 +303,12 @@ class TestConv1d(unittest.TestCase):
         # Compare forward outputs
         self.assert_tensors_close(my_output, torch_output, "Conv1d backward forward pass")
 
-        print("baise ta mere")
-        
         # Backward pass
         my_output.backward()
         torch_output.sum().backward()
-        
+
+        print("my input backward shape", my_input.grad)
+        print("torch input backward shape", torch_input.grad)
         # Compare input gradients
         self.assert_tensors_close(my_input.grad, torch_input.grad, "Conv1d backward input grad")
         

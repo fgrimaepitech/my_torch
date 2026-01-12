@@ -99,25 +99,81 @@ def trace_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[0].backward(tensors[0].grad)
     return np.trace(grad_outputs[0])
 
-def conv1d_backward(tensors: Any, grad_outputs: Any) -> Any:
+def conv1d_backward(tensors: Any, grad_outputs: Any, stride: int = 1, padding: int = 0) -> Any:
     x, weight, bias = tensors
-    grad_output = grad_outputs[0].data
-
-    grad_x = None
-    grad_weight = None
-    grad_bias = None
-
-    if x.requires_grad:
-        grad_x = conv1d_grad_input(grad_output, weight)
-    if weight.requires_grad:
-        grad_weight = conv1d_grad_weight(grad_output, x)
-    if bias is not None and bias.requires_grad:
+    grad_output = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+    
+    if not isinstance(grad_output, np.ndarray):
+        grad_output = np.array(grad_output)
+    
+    weight_data = weight.data if isinstance(weight, ts.Tensor) else weight
+    
+    if isinstance(x, ts.Tensor) and x.requires_grad:
+        grad_x = conv1d_grad_input(grad_output, weight_data, stride, padding)
+        if grad_x is not None:
+            x.grad = grad_x
+            x.backward(x.grad)
+    
+    if isinstance(weight, ts.Tensor) and weight.requires_grad:
+        grad_weight = conv1d_grad_weight(grad_output, x, stride, padding)
+        if grad_weight is not None:
+            weight.grad = grad_weight
+            weight.backward(weight.grad)
+    
+    if bias is not None and isinstance(bias, ts.Tensor) and bias.requires_grad:
         grad_bias = grad_output.sum(axis=(0, 2))
+        bias.grad = grad_bias
+        bias.backward(bias.grad)
+    
+    return grad_output
 
-    return [grad_x, grad_weight, grad_bias]
+def conv1d_grad_input(grad_output: np.ndarray, weight: 'ts.Tensor', 
+                      stride: int = 1, padding: int = 0) -> np.ndarray:
+    batch_size, out_channels, out_length = grad_output.shape
+    _, in_channels, kernel_size = weight.data.shape
+    
+    length = (out_length - 1) * stride + kernel_size - 2 * padding
+    
+    grad_input_padded = np.zeros((batch_size, in_channels, length + 2 * padding))
+    
+    for b in range(batch_size):
+        for oc in range(out_channels):
+            for ol in range(out_length):
+                il_start = ol * stride
+                
+                for k in range(kernel_size):
+                    grad_input_padded[b, :, il_start + k] += \
+                        weight[oc, :, k] * grad_output[b, oc, ol]
+    
+    if padding > 0:
+        return grad_input_padded[:, :, padding:-padding]
+    return grad_input_padded
 
-def conv1d_grad_input(grad_output, weight):
-    pass
 
-def conv1d_grad_weight(grad_output, x):
-    pass
+def conv1d_grad_weight(grad_output: np.ndarray, x: 'ts.Tensor',
+                       stride: int = 1, padding: int = 0) -> np.ndarray:
+    batch_size, out_channels, out_length = grad_output.shape
+    _, in_channels, _ = x.data.shape
+    
+    kernel_size = x.data.shape[2] - (out_length - 1) * stride + 2 * padding
+    
+    grad_weight = np.zeros((out_channels, in_channels, kernel_size))
+    
+    if padding > 0:
+        x_padded = np.pad(x.data, 
+                         ((0, 0), (0, 0), (padding, padding)), 
+                         mode='constant')
+    else:
+        x_padded = x.data
+    
+    for b in range(batch_size):
+        for oc in range(out_channels):
+            for ol in range(out_length):
+                il_start = ol * stride
+                il_end = il_start + kernel_size
+                
+                x_window = x_padded[b, :, il_start:il_end]
+                
+                grad_weight[oc] += x_window * grad_output[b, oc, ol]
+    
+    return grad_weight

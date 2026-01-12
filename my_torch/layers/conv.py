@@ -58,13 +58,12 @@ class Conv1d(ConvNd):
         weight_reshaped = self.weight.data.reshape(self.out_channels, -1)
 
         result = np.einsum('bij,oj->bio', windows_reshaped, weight_reshaped)
-        # Transpose from (batch, out_length, out_channels) to (batch, out_channels, out_length)
         result = result.transpose(0, 2, 1)
 
         if self.bias is not None:
             result += self.bias.data.reshape(1, -1, 1)
 
-        return Tensor(result, requires_grad=input.requires_grad, grad_fn=Function(dv.conv1d_backward, [self._input, self.weight, self.bias]))
+        return Tensor(result, requires_grad=input.requires_grad, grad_fn=Function(dv.conv1d_backward, [self._input, self.weight, self.bias], stride=self.stride, padding=self.padding))
 
     def _pad1d(self, input: Tensor, padding: int) -> Tensor:
         batch_size, channels, length = input.data.shape
@@ -85,31 +84,6 @@ class Conv1d(ConvNd):
                 unfolded_data[b, :, c, :] = window.data
 
         return Tensor(unfolded_data, requires_grad=input.requires_grad)
-
-    def _conv_backward(self, tensors, grad_outputs):
-        x, weight, bias = tensors
-        grad_output = grad_outputs[0].data
-
-        grad_x = None
-        grad_weight = None
-        grad_bias = None
-
-        if x.requires_grad:
-            grad_x = self._conv1d_grad_input(grad_output, weight)
-
-        if weight.requires_grad:
-            grad_weight = self._conv1d_grad_weight(grad_output, self._input_padded)
-
-        if bias is not None and bias.requires_grad:
-            grad_bias = grad_output.sum(axis=(0, 2))
-
-        return [grad_x, grad_weight, grad_bias]
-
-    def _conv1d_grad_input(self, grad_output, weight):
-        pass
-
-    def _conv1d_grad_weight(self, grad_output, input_padded):
-        pass
 
     def parameters(self):
         params = [self.weight]

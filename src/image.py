@@ -226,7 +226,7 @@ def execute_train_with_real_image(args):
     """Test Conv2d with a real image from file or URL."""
     try:
         # Try to load a local image
-        image_path = "test_image.jpg"  # Change this to your image path
+        image_path = "bunny.png"  # Change this to your image path
         
         if os.path.exists(image_path):
             img = Image.open(image_path).convert('RGB')
@@ -240,7 +240,27 @@ def execute_train_with_real_image(args):
             
         # Rest of the function remains the same as execute_train
         # ... [same code as above] ...
-        
+        print("Applying convolution...")
+        conv = my_torch.Conv2d(
+            in_channels=3, 
+            out_channels=16, 
+            kernel_size=(3, 3), 
+            stride=(2, 2), 
+            padding=(1, 1)
+        )
+        x = my_torch.Tensor(img_array.transpose(2, 0, 1)[np.newaxis, ...])
+        y = conv(x)
+        print(f"Output shape: {y.data.shape}")
+        print(f"Weight shape: {conv.weight.data.shape}")
+        print(f"Bias shape: {conv.bias.data.shape if conv.bias is not None else None}")
+        print(f"Number of parameters: {sum(p.data.size for p in conv.parameters())}")
+        print(f"Input shape: {x.data.shape}")
+        print(f"Output shape: {y.data.shape}")
+        print(f"Weight shape: {conv.weight.data.shape}")
+        print(f"Bias shape: {conv.bias.data.shape if conv.bias is not None else None}")
+        print(f"Number of parameters: {sum(p.data.size for p in conv.parameters())}")
+        visualize_conv_results(img_array, x.data, y.data)
+
     except Exception as e:
         print(f"Error loading image: {e}")
         print("Falling back to generated test pattern...")
@@ -256,7 +276,7 @@ if __name__ == "__main__":
     # Import torch for comparison
     try:
         import torch
-        execute_train(args)
+        execute_train_with_real_image(args)
     except ImportError:
         print("PyTorch not installed, running without comparison...")
         # Create a dummy torch module
@@ -269,4 +289,4 @@ if __name__ == "__main__":
                         return None
         
         torch = DummyTorch()
-        execute_train(args)
+        execute_train_with_real_image(args)

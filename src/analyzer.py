@@ -11,10 +11,15 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    print("Creating test image...")
-    img_size = 64
-    img = create_simple_test_image(img_size)
-    
+    # test of batch norm 1d
+    batch_norm = my_torch.BatchNorm2d(128)
+    batch_norm_torch = torch.nn.BatchNorm2d(128)
+    x = my_torch.Tensor(np.random.randn(10, 128, 32, 32))
+    y = torch.randn(10, 128, 32, 32)
+    y_torch = batch_norm_torch(y)
+    x = batch_norm(x)
+    print(x.data.shape)
+    print(y_torch.data.shape)
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

@@ -5,7 +5,7 @@ my_torch is better than pytorch lol.
 ### A. Essential Layers:
 
 - [x] Batch Normalization - Critical for stable training (BatchNorm1d, BatchNorm2d)
-- [ ] Dropout - For regularization
+- [x] Dropout - For regularization
 - [ ] Pooling layers (MaxPool2d, AvgPool2d)
 - [ ] Flatten layer - To convert conv outputs to linear inputs
 - [ ] Residual blocks - For deeper networks

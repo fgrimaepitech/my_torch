@@ -11,15 +11,12 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    # test of batch norm 1d
-    batch_norm = my_torch.BatchNorm2d(128)
-    batch_norm_torch = torch.nn.BatchNorm2d(128)
-    x = my_torch.Tensor(np.random.randn(10, 128, 32, 32))
-    y = torch.randn(10, 128, 32, 32)
-    y_torch = batch_norm_torch(y)
-    x = batch_norm(x)
-    print(x.data.shape)
-    print(y_torch.data.shape)
+    # test of dropout layer
+    dropout = my_torch.Dropout(p=0.5, inplace=True)
+    dropout_torch = torch.nn.Dropout(p=0.5, inplace=True)
+    x = my_torch.Tensor(np.random.randn(10, 128))
+    x = dropout(x)
+    print(x.data)
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

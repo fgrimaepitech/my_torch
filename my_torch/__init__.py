@@ -10,3 +10,4 @@ from .layers.linear import Linear
 from .layers.relu import ReLU
 from .layers.conv import ConvNd, Conv1d, Conv2d
 from .layers.batch_norm import BatchNorm1d, BatchNorm2d
+from .layers.dropout import Dropout

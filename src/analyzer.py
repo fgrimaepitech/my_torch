@@ -11,14 +11,15 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    # test of max pool 2d layer
-    max_pool = my_torch.MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=(0, 0), dilation=(1, 1))
-    max_pool_torch = torch.nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=(0, 0), dilation=(1, 1))
-    x = my_torch.Tensor(np.random.randn(10, 3, 32, 32))
-    x_torch = torch.randn(10, 3, 32, 32)
-    y = max_pool(x)
-    y_torch = max_pool_torch(x_torch)
+    # test of flatten layer
+    flatten = my_torch.Flatten()
+    x = my_torch.Tensor(np.random.randn(32, 1, 5, 5))
+    print(x.data.shape)
+    y = flatten(x)
     print(y.data.shape)
+    flatten_torch = torch.nn.Flatten()
+    x_torch = torch.randn(32, 1, 5, 5)
+    y_torch = flatten_torch(x_torch)
     print(y_torch.data.shape)
 
 def main():

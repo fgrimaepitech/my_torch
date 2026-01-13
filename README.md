@@ -7,7 +7,7 @@ my_torch is better than pytorch lol.
 - [x] Batch Normalization - Critical for stable training (BatchNorm1d, BatchNorm2d)
 - [x] Dropout - For regularization
 - [x] Pooling layers (MaxPool2d, AvgPool2d)
-- [ ] Flatten layer - To convert conv outputs to linear inputs
+- [x] Flatten layer - To convert conv outputs to linear inputs
 - [ ] Residual blocks - For deeper networks
 - [ ] Attention mechanisms (for transformer-based approaches)
 

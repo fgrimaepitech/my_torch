@@ -59,7 +59,7 @@ class BatchNorm2d(Module):
         self.eps = eps
         self.momentum = momentum
 
-        self.gamma = Tensor(np.zeros(num_features), requires_grad=True)
+        self.gamma = Tensor(np.ones(num_features), requires_grad=True)
         self.beta = Tensor(np.zeros(num_features), requires_grad=True)
 
         self.running_mean = np.zeros(num_features)
@@ -89,7 +89,7 @@ class BatchNorm2d(Module):
             mean_reshaped = self.running_mean.reshape(1, channels, 1, 1)
             var_reshaped = self.running_var.reshape(1, channels, 1, 1)
 
-        x_normalized = (x.data - mean_reshaped) / np.sqrt(var_reshaped * self.eps)
+        x_normalized = (x.data - mean_reshaped) / np.sqrt(var_reshaped + self.eps)
 
         gamma_reshaped = self.gamma.data.reshape(1, channels, 1, 1)
         beta_reshaped = self.beta.data.reshape(1, channels, 1, 1)

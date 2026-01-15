@@ -13,3 +13,4 @@ from .layers.batch_norm import BatchNorm1d, BatchNorm2d
 from .layers.dropout import Dropout
 from .layers.pool import MaxPool2d, AvgPool2d
 from .layers.flatten import Flatten
+from .layers.residual import ResidualBlock, BottleneckBlock

@@ -114,8 +114,6 @@ class Conv2d(Module):
         if self.padding != (0, 0):
             input = self._pad2d(input, self.padding)
 
-        print(f"Kernel size: {self.kernel_size}")
-
         batch_size, in_channels, height, width = input.data.shape
         kh, kw = self.kernel_size
         sh, sw = self.stride

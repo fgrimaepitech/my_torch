@@ -23,7 +23,13 @@ class Tensor:
         self.grad = None
 
     def __str__(self):
-        data_str = np.array2string(self.data, separator=', ', prefix='', suffix='')
+        data_str = np.array2string(
+            self.data,
+            separator=', ',
+            precision=8,
+            suppress_small=False,
+            floatmode='maxprec_equal'
+        )
         return f"tensor({data_str}, requires_grad={self.requires_grad})"
 
     def requires_grad_(self, requires_grad: bool = True):

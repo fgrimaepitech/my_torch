@@ -1,9 +1,13 @@
 # Core
 from .tensor import Tensor, tensor
 from .neural_network import Module
+from .optimizer import Optimizer
 
 # Functionnal
 from .functionnal import max, as_strided, trace
+
+# Optimizer
+from .optimizer.sgd import SGD
 
 # Layers
 from .layers.linear import Linear

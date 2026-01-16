@@ -8,8 +8,7 @@ my_torch is better than pytorch lol.
 - [x] Dropout - For regularization
 - [x] Pooling layers (MaxPool2d, AvgPool2d)
 - [x] Flatten layer - To convert conv outputs to linear inputs
-- [ ] Residual blocks - For deeper networks
-- [ ] Attention mechanisms (for transformer-based approaches)
+- [x] Residual blocks - For deeper networks
 
 ### B. Activation Functions:
 

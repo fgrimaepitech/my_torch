@@ -177,3 +177,9 @@ def conv1d_grad_weight(grad_output: np.ndarray, x: 'ts.Tensor',
                 grad_weight[oc] += x_window * grad_output[b, oc, ol]
     
     return grad_weight
+
+def reshape_backward(tensors: Any, grad_outputs: Any) -> Any:
+    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
+        tensors[0].grad = grad_outputs[0].reshape(tensors[0].data.shape)
+        tensors[0].backward(tensors[0].grad)
+    return grad_outputs[0].reshape(tensors[0].data.shape)

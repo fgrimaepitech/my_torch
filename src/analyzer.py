@@ -11,153 +11,71 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    print("=== CORRECT COMPARISON ===")
+    # ConvTranspose2d test - NEED 4D INPUT!
+    # Wrong: (2, 3, 4) - 3D tensor
+    # Correct: (batch_size, in_channels, height, width)
     
-    # 1. Create identical random input
-    np.random.seed(42)
-    x_data = np.random.randn(2, 4, 8, 8).astype(np.float32)
+    # Create 4D input: (batch_size=2, channels=3, height=4, width=4)
+    input = my_torch.tensor(np.random.randn(2, 3, 4, 4))  # ← 4D!
     
-    # 2. Your bottleneck
-    my_bottleneck = my_torch.BottleneckBlock(in_channels=4, out_channels=8, stride=1)
-    x_my = my_torch.Tensor(x_data)
-    y_my = my_bottleneck(x_my)
+    print(f"Input shape: {input.data.shape}")
+    print(f"Expected: (2, 3, 4, 4) - (batch, channels, height, width)")
     
-    print(f"MyTorch output shape: {y_my.data.shape}")
-    print(f"MyTorch min: {y_my.data.min():.4f}, max: {y_my.data.max():.4f}")
-    print(f"MyTorch has negatives: {(y_my.data < 0).any()}")
+    # Create ConvTranspose2d layer
+    conv_transpose = my_torch.ConvTranspose2d(
+        in_channels=3,      # Should match input channels
+        out_channels=2,     # Output channels
+        kernel_size=(3, 3),
+        stride=(1, 1),
+        padding=(1, 1)
+    )
     
-    # 3. PyTorch EXACT match
-    import torch.nn as nn
+    # Forward pass
+    output = conv_transpose(input)
+    print(f"\nOutput shape: {output.data.shape}")
+    
+    # Calculate expected output shape
+    # Formula: H_out = (H_in - 1) * stride - 2*padding + dilation*(kernel_size-1) + output_padding + 1
+    # With stride=1, padding=1, kernel=3, output_padding=0, dilation=1:
+    # H_out = (4 - 1)*1 - 2*1 + 1*(3-1) + 0 + 1 = 3 - 2 + 2 + 1 = 4
+    print(f"Expected output shape: (2, 2, 4, 4)")
+    
+    # Compare with PyTorch
     import torch
+    import torch.nn as nn
     
-    class CorrectTorchBottleneck(nn.Module):
-        def __init__(self):
-            super().__init__()
-            # First conv: 4 -> 2 (8//4=2)
-            self.conv1 = nn.Conv2d(4, 2, kernel_size=1, bias=False)
-            self.bn1 = nn.BatchNorm2d(2)
-            # Second conv: 2 -> 2
-            self.conv2 = nn.Conv2d(2, 2, kernel_size=3, padding=1, bias=False)
-            self.bn2 = nn.BatchNorm2d(2)
-            # Third conv: 2 -> 8
-            self.conv3 = nn.Conv2d(2, 8, kernel_size=1, bias=False)
-            self.bn3 = nn.BatchNorm2d(8)
-            # Skip connection (4 -> 8)
-            self.shortcut = nn.Conv2d(4, 8, kernel_size=1, bias=False)
-            self.shortcut_bn = nn.BatchNorm2d(8)
-            
-        def forward(self, x):
-            identity = x
-            
-            out = nn.functional.relu(self.bn1(self.conv1(x)))
-            out = nn.functional.relu(self.bn2(self.conv2(out)))
-            out = self.bn3(self.conv3(out))
-            
-            identity = self.shortcut_bn(self.shortcut(identity))
-            out += identity
-            out = nn.functional.relu(out)
-            
-            return out
+    torch_conv_transpose = nn.ConvTranspose2d(
+        in_channels=3,
+        out_channels=2,
+        kernel_size=3,
+        stride=1,
+        padding=1,
+        bias=True
+    )
     
-    torch_bottleneck = CorrectTorchBottleneck()
-    
-    # 4. Copy weights from my_torch to PyTorch
+    # Copy weights for fair comparison
+    # PyTorch weight shape: (in_channels, out_channels, kernel_h, kernel_w)
+    # Your weight shape: (in_channels, out_channels, kernel_h, kernel_w) - same!
     with torch.no_grad():
-        # Copy conv1
-        torch_bottleneck.conv1.weight.copy_(
-            torch.tensor(my_bottleneck.conv1.weight.data)
+        torch_conv_transpose.weight.copy_(
+            torch.tensor(conv_transpose.weight.data)
         )
-        # Copy bn1
-        torch_bottleneck.bn1.weight.copy_(
-            torch.tensor(my_bottleneck.bn1.gamma.data)
+        torch_conv_transpose.bias.copy_(
+            torch.tensor(conv_transpose.bias.data)
         )
-        torch_bottleneck.bn1.bias.copy_(
-            torch.tensor(my_bottleneck.bn1.beta.data)
-        )
-        torch_bottleneck.bn1.running_mean.copy_(
-            torch.tensor(my_bottleneck.bn1.running_mean)
-        )
-        torch_bottleneck.bn1.running_var.copy_(
-            torch.tensor(my_bottleneck.bn1.running_var)
-        )
-        
-        # Copy conv2
-        torch_bottleneck.conv2.weight.copy_(
-            torch.tensor(my_bottleneck.conv2.weight.data)
-        )
-        # Copy bn2
-        torch_bottleneck.bn2.weight.copy_(
-            torch.tensor(my_bottleneck.bn2.gamma.data)
-        )
-        torch_bottleneck.bn2.bias.copy_(
-            torch.tensor(my_bottleneck.bn2.beta.data)
-        )
-        torch_bottleneck.bn2.running_mean.copy_(
-            torch.tensor(my_bottleneck.bn2.running_mean)
-        )
-        torch_bottleneck.bn2.running_var.copy_(
-            torch.tensor(my_bottleneck.bn2.running_var)
-        )
-        
-        # Copy conv3
-        torch_bottleneck.conv3.weight.copy_(
-            torch.tensor(my_bottleneck.conv3.weight.data)
-        )
-        # Copy bn3
-        torch_bottleneck.bn3.weight.copy_(
-            torch.tensor(my_bottleneck.bn3.gamma.data)
-        )
-        torch_bottleneck.bn3.bias.copy_(
-            torch.tensor(my_bottleneck.bn3.beta.data)
-        )
-        torch_bottleneck.bn3.running_mean.copy_(
-            torch.tensor(my_bottleneck.bn3.running_mean)
-        )
-        torch_bottleneck.bn3.running_var.copy_(
-            torch.tensor(my_bottleneck.bn3.running_var)
-        )
-        
-        # Copy shortcut
-        if hasattr(my_bottleneck, 'shortcut') and my_bottleneck.shortcut:
-            torch_bottleneck.shortcut.weight.copy_(
-                torch.tensor(my_bottleneck.shortcut.weight.data)
-            )
-            torch_bottleneck.shortcut_bn.weight.copy_(
-                torch.tensor(my_bottleneck.shortcut_bn.gamma.data)
-            )
-            torch_bottleneck.shortcut_bn.bias.copy_(
-                torch.tensor(my_bottleneck.shortcut_bn.beta.data)
-            )
     
-    # 5. Run PyTorch
-    x_torch = torch.tensor(x_data)
-    y_torch = torch_bottleneck(x_torch)
+    torch_input = torch.tensor(input.data, dtype=torch.float32)
+    torch_output = torch_conv_transpose(torch_input)
     
-    print(f"\nPyTorch output shape: {y_torch.shape}")
-    print(f"PyTorch min: {y_torch.min():.4f}, max: {y_torch.max():.4f}")
-    print(f"PyTorch has negatives: {(y_torch.detach().numpy() < 0).any()}")
+    print(f"\nPyTorch output shape: {torch_output.shape}")
     
-    # 6. Compare
-    print(f"\n=== COMPARISON ===")
-    y_torch_np = y_torch.detach().numpy()
-    
-    # Check if both are ≥ 0 (ReLU applied)
-    if (y_my.data < 0).any():
-        print("❌ MyTorch has negative values (ReLU not working?)")
-    else:
-        print("✓ MyTorch output ≥ 0 (ReLU working)")
-    
-    if (y_torch_np < 0).any():
-        print("❌ PyTorch has negative values")
-    else:
-        print("✓ PyTorch output ≥ 0")
-    
-    # Calculate difference
-    diff = np.abs(y_my.data - y_torch_np)
-    print(f"\nMax difference: {diff.max():.6f}")
+    # Compare
+    diff = np.abs(output.data - torch_output.detach().numpy())
+    print(f"\nComparison:")
+    print(f"Max difference: {diff.max():.6f}")
     print(f"Mean difference: {diff.mean():.6f}")
     
-    return y_my, y_torch
+    return output
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

@@ -35,6 +35,3 @@ def trace(tensor: Tensor) -> Tensor:
     if not isinstance(result, np.ndarray):
         result = np.array(result)
     return Tensor(result, requires_grad=tensor.requires_grad, grad_fn=Function(dv.trace_backward, [tensor]))
-
-def reshape(tensor: Tensor, shape: Union[tuple, int]) -> Tensor:
-    return Tensor(tensor.data.reshape(shape), requires_grad=tensor.requires_grad, grad_fn=Function(dv.reshape_backward, [tensor, shape]))

@@ -1,6 +1,7 @@
 from my_torch.functionnal import reshape
 from my_torch.neural_network import Module
 import my_torch
+from my_torch.tensor import Tensor
 
 class AutoEncoder(Module):
     def __init__(self):
@@ -19,8 +20,20 @@ class AutoEncoder(Module):
 
         self.decoder = my_torch.Sequential(
             my_torch.Linear(2, 3136),
-            reshape((-1, 64, 7, 7)),
-            
-
+            my_torch.Reshape((-1, 64, 7, 7)),
+            my_torch.ConvTranspose2d(64, 64, stride=(1, 1), kernel_size=(3, 3), padding=1),
+            my_torch.LeakyReLU(0.01),
+            my_torch.ConvTranspose2d(64, 64, stride=(2, 2), kernel_size=(3, 3), padding=1),
+            my_torch.LeakyReLU(0.01),
+            my_torch.ConvTranspose2d(64, 32, stride=(2, 2), kernel_size=(3, 3), padding=0),
+            my_torch.LeakyReLU(0.01),
+            my_torch.ConvTranspose2d(32, 1, stride=(1, 1), kernel_size=(3, 3), padding=0),
+            my_torch.Trim(),
+            my_torch.Sigmoid()
         )
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
         

@@ -1,4 +1,3 @@
-from my_torch.functionnal import reshape
 from my_torch.neural_network import Module
 import my_torch
 from my_torch.tensor import Tensor

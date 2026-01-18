@@ -1,6 +1,6 @@
 from typing import Callable
 import numpy as np
-from my_torch.optimizer import Optimizer
+from my_torch.neural_network import Optimizer
 
 class SGD(Optimizer):
     def __init__(self, params, lr: float = 0.01, momentum: float = 0.0, dampening: float = 0,  weight_decay: float = 0.0, nesterov: bool = False):

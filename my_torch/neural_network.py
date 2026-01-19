@@ -1,6 +1,6 @@
 
 from ast import Dict, List
-from typing import Callable
+from typing import Callable, Any
 
 
 class Module:
@@ -28,11 +28,19 @@ class Optimizer:
         self._hook_pre_hooks: List[Callable] = []
         self._hook_post_hooks: List[Callable] = []
 
-        if isinstance(params, (list, tuple)):
-            for param in params:
-                self.add_param_group({'params': param})
+        if isinstance(params, (list, tuple)) and len(params) > 0:
+            if isinstance(params[0], dict) and 'params' in params[0]:
+                for param_group in params:
+                    merged_group = {**defaults, **param_group}
+                    self.add_param_group(merged_group)
+            else:
+                for param in params:
+                    self.add_param_group({**defaults, 'params': param})
         else:
-            self.add_param_group({'params': params})
+            if isinstance(params, (list, tuple)) and len(params) == 0:
+                self.add_param_group({**defaults, 'params': []})
+            else:
+                self.add_param_group({**defaults, 'params': params})
 
     def add_param_group(self, param_group: dict):
         self.param_groups.append(param_group)

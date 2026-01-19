@@ -11,71 +11,40 @@ import numpy as np
 import torch
 
 def execute_train(args):
-    # ConvTranspose2d test - NEED 4D INPUT!
-    # Wrong: (2, 3, 4) - 3D tensor
-    # Correct: (batch_size, in_channels, height, width)
+    """
+    Super simple Adam test.
+    """
+    print("Testing Adam Optimizer")
     
-    # Create 4D input: (batch_size=2, channels=3, height=4, width=4)
-    input = my_torch.tensor(np.random.randn(2, 3, 4, 4))  # ← 4D!
+    # Create parameter
+    w = my_torch.tensor([1.0, 2.0], requires_grad=True)
+    w_torch = torch.tensor([1.0, 2.0], requires_grad=True)
     
-    print(f"Input shape: {input.data.shape}")
-    print(f"Expected: (2, 3, 4, 4) - (batch, channels, height, width)")
+    # Option A: Pass as list of tensors (if you fix Adam)
+    # adam = my_torch.Adam([w], lr=0.1)
     
-    # Create ConvTranspose2d layer
-    conv_transpose = my_torch.ConvTranspose2d(
-        in_channels=3,      # Should match input channels
-        out_channels=2,     # Output channels
-        kernel_size=(3, 3),
-        stride=(1, 1),
-        padding=(1, 1)
-    )
+    # Option B: Pass as parameter group (works with current code)
+    adam = my_torch.Adam([{'params': [w], 'lr': 0.1}])
+    adam_torch = torch.optim.Adam([w_torch], lr=0.1)
     
-    # Forward pass
-    output = conv_transpose(input)
-    print(f"\nOutput shape: {output.data.shape}")
+    print(f"Initial w: {w.data}")
+    print(f"Initial w_torch: {w_torch.data}")
+    # Set fake gradient
+    w.grad = my_torch.tensor([0.1, 0.2])
+    w_torch.grad = torch.tensor([0.1, 0.2])
+    print(f"Gradient: {w.grad}")
+    print(f"Gradient w_torch: {w_torch.grad}")
+
+    # Take step
+    adam.step()
+    adam_torch.step()
     
-    # Calculate expected output shape
-    # Formula: H_out = (H_in - 1) * stride - 2*padding + dilation*(kernel_size-1) + output_padding + 1
-    # With stride=1, padding=1, kernel=3, output_padding=0, dilation=1:
-    # H_out = (4 - 1)*1 - 2*1 + 1*(3-1) + 0 + 1 = 3 - 2 + 2 + 1 = 4
-    print(f"Expected output shape: (2, 2, 4, 4)")
-    
-    # Compare with PyTorch
-    import torch
-    import torch.nn as nn
-    
-    torch_conv_transpose = nn.ConvTranspose2d(
-        in_channels=3,
-        out_channels=2,
-        kernel_size=3,
-        stride=1,
-        padding=1,
-        bias=True
-    )
-    
-    # Copy weights for fair comparison
-    # PyTorch weight shape: (in_channels, out_channels, kernel_h, kernel_w)
-    # Your weight shape: (in_channels, out_channels, kernel_h, kernel_w) - same!
-    with torch.no_grad():
-        torch_conv_transpose.weight.copy_(
-            torch.tensor(conv_transpose.weight.data)
-        )
-        torch_conv_transpose.bias.copy_(
-            torch.tensor(conv_transpose.bias.data)
-        )
-    
-    torch_input = torch.tensor(input.data, dtype=torch.float32)
-    torch_output = torch_conv_transpose(torch_input)
-    
-    print(f"\nPyTorch output shape: {torch_output.shape}")
-    
-    # Compare
-    diff = np.abs(output.data - torch_output.detach().numpy())
-    print(f"\nComparison:")
-    print(f"Max difference: {diff.max():.6f}")
-    print(f"Mean difference: {diff.mean():.6f}")
-    
-    return output
+    print(f"After step: {w.data}")
+    print(f"After step w_torch: {w_torch.data}")
+    print(f"Adam: {adam.state_dict()}")
+    print(f"Adam Torch: {adam_torch.state_dict()}")
+    return adam
+
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

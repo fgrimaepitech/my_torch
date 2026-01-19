@@ -6,7 +6,8 @@ from .neural_network import Module, Optimizer
 from .functionnal import max, as_strided, trace
 
 # Optimizer
-from .optimizer import sgd
+from .optimizer.sgd import SGD
+from .optimizer.adam import Adam
 
 # Layers
 from .layers.linear import Linear

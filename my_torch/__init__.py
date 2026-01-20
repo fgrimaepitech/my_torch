@@ -24,3 +24,4 @@ from .layers.convtranspose import ConvTranspose2d
 from .layers.reshape import Reshape
 from .layers.trim import Trim
 from .layers.sigmoid import Sigmoid
+from .layers.loss import MSELoss

@@ -27,61 +27,62 @@ class ConvTranspose2d(Module):
             self.bias = None
 
     def forward(self, x: Tensor) -> Tensor:
-        print(x.data.shape)
         batch_size, in_channels, height, width = x.data.shape
-        out_height = (height - 1) * self.stride[0] - 2 * self.padding[0] + self.dilation[0] * (self.kernel_size[0] - 1) + self.output_padding[0] + 1
-        out_width = (width - 1) * self.stride[1] - 2 * self.padding[1] + self.dilation[1] * (self.kernel_size[1] - 1) + self.output_padding[1] + 1
 
-        output = np.zeros((batch_size, self.out_channels, out_height, out_width))
+        kh, kw = self.kernel_size
+        sh, sw = self.stride
+        ph, pw = self.padding
+        oph, opw = self.output_padding
+        dh, dw = self.dilation
+
+        if (dh, dw) != (1, 1):
+            raise NotImplementedError("ConvTranspose2d dilation != 1 is not supported yet")
+
+        # Expected output size (matches PyTorch formula for dilation=1)
+        out_height = (height - 1) * sh - 2 * ph + (kh - 1) + oph + 1
+        out_width = (width - 1) * sw - 2 * pw + (kw - 1) + opw + 1
+
+        # 1) Upsample input by stride (insert zeros)
+        up_h = (height - 1) * sh + 1
+        up_w = (width - 1) * sw + 1
+        upsampled = np.zeros((batch_size, in_channels, up_h, up_w), dtype=x.data.dtype)
+        upsampled[:, :, ::sh, ::sw] = x.data
+
+        # 2) Pad so that a standard conv with flipped kernel matches transposed conv geometry
+        pad_h = kh - 1 - ph
+        pad_w = kw - 1 - pw
+        padded = np.pad(
+            upsampled,
+            ((0, 0), (0, 0), (pad_h, pad_h), (pad_w, pad_w)),
+            mode='constant'
+        )
+
+        # 3) Convolve (valid) with flipped kernel
+        flipped_weight = np.flip(self.weight.data, axis=(2, 3))
+        conv_h = padded.shape[2] - kh + 1
+        conv_w = padded.shape[3] - kw + 1
+        output = np.zeros((batch_size, self.out_channels, conv_h, conv_w), dtype=x.data.dtype)
 
         for b in range(batch_size):
             for oc in range(self.out_channels):
-                channel_output = np.zeros((out_height, out_width))
-                for ic  in range (self.in_channels):
-                    weight = self.weight.data[ic, oc]
-                    input_channel = x.data[b, ic]
-
-                    if self.stride[0] > 1 or self.stride[1] > 1:
-                        dilated_h = height + (height - 1) * (self.dilation[0] - 1)
-                        dilated_w = width + (width - 1) * (self.dilation[1] - 1)
-                        dilated_input = np.zeros((dilated_h, dilated_w))
-
-                        for i in range(height):
-                            for j in range(width):
-                                dilated_input[i * self.dilation[0], j * self.dilation[1]] = input_channel[i, j]
-                                
-                        input_to_use = dilated_input
-                    else:
-                        input_to_use = input_channel
-
-                    flipped_weight = np.flip(weight)
-
-                    pad_h = self.kernel_size[0] - 1 - self.padding[0]
-                    pad_w = self.kernel_size[1] - 1 - self.padding[1]
-
-                    if pad_h > 0 or pad_w > 0:
-                        padded_input = np.pad(
-                            input_to_use, 
-                            ((pad_h, pad_h), (pad_w, pad_w)),
-                            mode='constant'
-                        )
-                    else:
-                        padded_input = input_to_use
-
-                    conv_h = padded_input.shape[0] - flipped_weight.shape[0] + 1
-                    conv_w = padded_input.shape[1] - flipped_weight.shape[1] + 1
-
+                channel_sum = np.zeros((conv_h, conv_w), dtype=x.data.dtype)
+                for ic in range(in_channels):
+                    k = flipped_weight[ic, oc]
                     for i in range(conv_h):
                         for j in range(conv_w):
-                            window = padded_input[i:i+flipped_weight.shape[0], j:j+flipped_weight.shape[1]]
-                            channel_output[i, j] += np.sum(window * flipped_weight)
-                
+                            patch = padded[b, ic, i:i+kh, j:j+kw]  # always (kh, kw)
+                            channel_sum[i, j] += np.sum(patch * k)
+                output[b, oc] = channel_sum
 
-                output[b, oc] += channel_output
+        # 4) Apply output_padding by padding on the bottom/right (PyTorch semantics)
+        if oph or opw:
+            output = np.pad(output, ((0, 0), (0, 0), (0, oph), (0, opw)), mode='constant')
+
+        # 5) Crop/pad defensively to the computed out_height/out_width (in case of edge mismatches)
+        output = output[:, :, :out_height, :out_width]
 
         if self.bias is not None:
-            for oc in range(self.out_channels):
-                output[:, oc, :, :] += self.bias.data[oc]
+            output += self.bias.data.reshape(1, -1, 1, 1)
 
         return Tensor(output, requires_grad=x.requires_grad)
 

@@ -14,6 +14,10 @@ class Linear(Module):
         else:
             self.bias = None
 
+        self._parameters['weight'] = self.weight
+        if self.bias is not None:
+            self._parameters['bias'] = self.bias
+
     def forward(self, x):
         result = x @ self.weight.T
         if self.bias is not None:

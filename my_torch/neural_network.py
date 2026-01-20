@@ -6,7 +6,8 @@ from typing import Callable, Any
 class Module:
     def __init__(self):
         # Avoid naming collision with the parameters() method
-        self._parameters = []
+        self._parameters = {}
+        self._modules = {}
 
     def forward(self, x):
         raise NotImplementedError
@@ -17,8 +18,40 @@ class Module:
     def backward(self, x):
         raise NotImplementedError
 
+    def train(self, mode: bool = True):
+        self.training = mode
+        for module in self._parameters:
+            module.train(mode)
+        return self
+
+    def eval(self):
+        return self.train(False)
+    
+    def children(self):
+        for name, module in self._modules.items():
+            yield module
+    
+    def modules(self):
+        yield self
+        for child in self.children():
+            yield from child.modules()
+
+    def add_parameter(self, name, param):
+        self._parameters[name] = param
+    
+    def add_module(self, name, module):
+        self._modules[name] = module
+
     def parameters(self):
-        return self._parameters
+        params = []
+        for param in self._parameters.values():
+            if param.requires_grad:
+                params.append(param)
+
+        for module in self._modules.values():
+            params.extend(module.parameters())
+
+        return params
 
 class Optimizer:
     def __init__(self, params, defaults: Dict[str, Any]):

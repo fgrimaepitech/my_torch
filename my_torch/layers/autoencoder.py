@@ -26,13 +26,23 @@ class AutoEncoder(Module):
             my_torch.LeakyReLU(0.01),
             my_torch.ConvTranspose2d(64, 32, stride=(2, 2), kernel_size=(3, 3), padding=0),
             my_torch.LeakyReLU(0.01),
-            my_torch.ConvTranspose2d(32, 1, stride=(1, 1), kernel_size=(3, 3), padding=0),
-            my_torch.Trim(),
+            my_torch.ConvTranspose2d(32, 1, stride=(1, 1), kernel_size=(3, 3), padding=1, output_padding=1),
             my_torch.Sigmoid()
         )
 
+        self.add_module('encoder', self.encoder)
+        self.add_module('decoder', self.decoder)
+
     def forward(self, x: Tensor) -> Tensor:
+        print("x shape in encoder", x.data.shape)
         x = self.encoder(x)
+        print("x shape in decoder", x.data.shape)
         x = self.decoder(x)
+        print("x shape in the final result", x.data.shape)
         return x
+
+    def train(self, mode: bool = True):
+        self.encoder.train(mode)
+        self.decoder.train(mode)
+        return self
         

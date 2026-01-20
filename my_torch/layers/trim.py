@@ -9,7 +9,12 @@ class Trim(Module):
         self.end = end
 
     def forward(self, x: Tensor) -> Tensor:
-        return x.data[self.start:self.end]
+        h_start = self.start
+        h_end = -self.end if self.end != 0 else None
+        w_start = self.start
+        w_end = -self.end if self.end != 0 else None
+        trimmed = x.data[:, :, h_start:h_end, w_start:w_end]
+        return Tensor(trimmed, requires_grad=x.requires_grad)
 
     def parameters(self):
         return []

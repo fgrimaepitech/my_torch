@@ -7,7 +7,8 @@ class Sigmoid(Module):
         super().__init__()
 
     def forward(self, x: Tensor) -> Tensor:
-        return 1 / (1 + np.exp(-x))
+        y = 1 / (1 + np.exp(-x.data))
+        return Tensor(y, requires_grad=x.requires_grad)
 
     def parameters(self):
         return []

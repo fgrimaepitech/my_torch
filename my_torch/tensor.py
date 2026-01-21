@@ -74,6 +74,12 @@ class Tensor:
             result = np.array(result)
         return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.sum_backward, [self, dim]))
 
+    def mean(self, dim: Optional[int] = None) -> 'Tensor':
+        result = np.mean(self.data, axis=dim)
+        if not isinstance(result, np.ndarray):
+            result = np.array(result)
+        return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.mean_backward, [self, dim]))
+
     @staticmethod
     def randn(*args, **kwargs):
         return Tensor(np.random.randn(*args, **kwargs), requires_grad=False)

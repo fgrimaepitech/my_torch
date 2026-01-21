@@ -12,6 +12,7 @@ import torch
 # Remove: import torch.nn as nn
 # Remove: import torch.nn.functional as F
 import matplotlib.pyplot as plt
+import numpy as np
 import time
 from torchvision import datasets
 from torchvision import transforms
@@ -20,9 +21,73 @@ from torch.utils.data import DataLoader
 # Hyperparameters
 RANDOM_SEED = 49
 LEARNING_RATE = 0.0005
-BATCH_SIZE = 8
-NUM_EPOCHS = 2
+BATCH_SIZE = 128
+NUM_EPOCHS = 6
 NUM_CLASSES = 10
+
+def evaluate_model(model, test_loader, num_samples=5):
+    """Visualize autoencoder reconstructions."""
+    model.eval()
+    
+    # Get some test samples
+    test_samples = []
+    for data, _ in test_loader:
+        data_np = data.numpy()
+        data_custom = my_torch.Tensor(data_np[:num_samples], requires_grad=False)
+        test_samples.append(data_custom)
+        if len(test_samples) >= num_samples:
+            break
+    
+    import matplotlib.pyplot as plt
+    
+    fig, axes = plt.subplots(num_samples, 2, figsize=(8, 12))
+    
+    for i in range(num_samples):
+        # Original
+        original = test_samples[i].data[0]  # First image in batch
+        if original.ndim == 3 and original.shape[0] == 1:
+            original = original.squeeze(0)
+        
+        axes[i, 0].imshow(original, cmap='gray')
+        axes[i, 0].set_title(f"Original {i+1}")
+        axes[i, 0].axis('off')
+        
+        # Reconstructed
+        with torch.no_grad():  # For your model, just ensure no grad computation
+            reconstructed = model(test_samples[i])
+            recon_img = reconstructed.data[0]
+            if recon_img.ndim == 3 and recon_img.shape[0] == 1:
+                recon_img = recon_img.squeeze(0)
+        
+        axes[i, 1].imshow(recon_img, cmap='gray')
+        axes[i, 1].set_title(f"Reconstructed {i+1}")
+        axes[i, 1].axis('off')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Calculate test loss
+    test_loss = 0.0
+    batch_count = 0
+    
+    for data, _ in test_loader:
+        data_np = data.numpy()
+        data_custom = my_torch.Tensor(data_np, requires_grad=False)
+        
+        output = model(data_custom)
+        diff = output - data_custom
+        batch_loss = (diff * diff).mean().data.item()
+        
+        test_loss += batch_loss
+        batch_count += 1
+        
+        # Only test first few batches for speed
+        if batch_count >= 10:
+            break
+    
+    print(f"Test Loss (first 10 batches): {test_loss / batch_count:.4f}")
+    return test_loss / batch_count
+
 
 def get_dataloaders_mnist(batch_size: int, num_workers: int = 0, train_transforms = None, test_transforms = None):
     if train_transforms is None:
@@ -157,6 +222,35 @@ def compute_epoch_loss_autoencoder_custom(model, loader, loss_fn):
     
     return total_loss / batch_count if batch_count > 0 else 0.0
 
+def save_model_weights(model, filename="autoencoder_weights.npz"):
+    """Save model parameters to file."""
+    weights_dict = {}
+    
+    def save_params(module, prefix=""):
+        for name, param in module._parameters.items():
+            if param is not None:
+                key = f"{prefix}{name}"
+                weights_dict[key] = param.data
+        
+        for name, submodule in module._modules.items():
+            save_params(submodule, f"{prefix}{name}.")
+    
+    save_params(model)
+    
+    np.savez(filename, **weights_dict)
+    print(f"Model saved to {filename}")
+    print(f"Total parameters saved: {len(weights_dict)}")
+
+def load_model_weights(model, filename="autoencoder_weights.npz"):
+    """Load model parameters from file."""
+    weights_dict = np.load(filename)
+    for name, param in model._parameters.items():
+        if name in weights_dict:
+            param.data = weights_dict[name]
+    print(f"Model loaded from {filename}")
+    print(f"Total parameters loaded: {len(weights_dict)}")
+
+
 def execute_train(args):
     print("Loading MNIST dataset...")
     train_loader, valid_loader, test_loader = get_dataloaders_mnist(
@@ -186,6 +280,18 @@ def execute_train(args):
                      logging_interval=1,  # Log every batch for debugging
                      skip_epoch_stats=False, 
                      save_model=None)
+
+    save_model_weights(model, "autoencoder_weights.npz")
+
+    model = my_torch.AutoEncoder()
+    print("Loading model weights...")
+    load_model_weights(model, "autoencoder_weights.npz")
+    print("Model loaded successfully")
+    print("Evaluating model...")
+    train_loader, valid_loader, test_loader = get_dataloaders_mnist(batch_size=BATCH_SIZE, num_workers=2)
+    print("test loader: ", test_loader)
+    evaluate_model(model, test_loader)
+    print("Model evaluated successfully")
 
 def main():
     parser = argparse.ArgumentParser(prog="my_torch_analyzer")

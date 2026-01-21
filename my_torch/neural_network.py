@@ -53,6 +53,50 @@ class Module:
 
         return params
 
+    def state_dict(self):
+        state = {}
+
+        def collect_params(module, prefix=""):
+            for name, param in module._parameters.items():
+                if param is not None:
+                    key = f"{prefix}{name}"
+                    state[key] = param.data.copy()
+            for name, submodule in module._modules.items():
+                collect_params(submodule, f"{prefix}{name}.")
+
+        collect_params(self)
+        return state
+
+    def load_state_dict(self, state_dict):
+        def load_params(module, prefix=""):
+            for name, param in module._parameters.items():
+                if param is not None:
+                    key = f"{prefix}{name}"
+                    if key in state_dict:
+                        param.data = state_dict[key].copy()
+            
+            for name, submodule in module._modules.items():
+                load_params(submodule, f"{prefix}{name}.")
+        
+        load_params(self)
+
+    def save(self, filepath):
+        import numpy as np
+        state_dict = self.state_dict()
+        np.savez(filepath, **state_dict)
+
+    @classmethod
+    def load(cls, filepath):
+        import numpy as np
+        model = cls()
+        data = np.load(filepath, allow_pickle=True)
+        state_dict = {key: data[key] for key in data.keys()}
+        
+        model.load_state_dict(state_dict)
+        print(f"Model loaded from {filepath}")
+        
+        return model
+
 class Optimizer:
     def __init__(self, params, defaults: Dict[str, Any]):
         self.defaults = defaults

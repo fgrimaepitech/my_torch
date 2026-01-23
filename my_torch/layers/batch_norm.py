@@ -65,7 +65,7 @@ class BatchNorm1d(Module):
         return [self.gamma, self.beta]
 
 class BatchNorm2d(Module):
-    def __init__(self, num_features: int, eps: float = 1e-5, momentum: float = 0.1):
+    def __init__(self, num_features: int, eps: float = 1e-5, momentum: float = 0.1, device: str = 'cuda'):
         super().__init__()
         self.num_features = num_features
         self.eps = eps

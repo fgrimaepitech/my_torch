@@ -3,7 +3,7 @@ from my_torch.neural_network import Module
 import numpy as np
 
 class Linear(Module):
-    def __init__(self, in_features, out_features, bias=True):
+    def __init__(self, in_features, out_features, bias=True, device: str = 'cuda'):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features

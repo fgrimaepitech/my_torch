@@ -262,7 +262,7 @@ def execute_train(args):
         batch_size=BATCH_SIZE, num_workers=2)
     
     print("Creating AutoEncoder model...")
-    model = my_torch.AutoEncoder()
+    model = my_torch.AutoEncoder(device='cuda')
     
     print(f"Model has {sum(p.data.size for p in model.parameters())} parameters")
     

@@ -6,7 +6,7 @@ from my_torch.tensor import Tensor
 from my_torch.device import get_array_module
 
 class ConvTranspose2d(Module):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = 1, padding: tuple = 0, output_padding: tuple = 0, groups: int = 1, bias: bool = True, dilation: tuple = 1):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = 1, padding: tuple = 0, output_padding: tuple = 0, groups: int = 1, bias: bool = True, dilation: tuple = 1, device: str = 'cpu'):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels

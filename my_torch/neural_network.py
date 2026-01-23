@@ -1,6 +1,7 @@
 
 from ast import Dict, List
 from typing import Callable, Any
+from .device import get_device
 
 
 class Module:
@@ -26,6 +27,38 @@ class Module:
 
     def eval(self):
         return self.train(False)
+    
+    def to(self, device: str):
+        """
+        Move all parameters and buffers to the specified device.
+        
+        Args:
+            device: 'cpu' or 'cuda'
+        
+        Returns:
+            self (for method chaining)
+        """
+        device = get_device(device)
+        
+        # Move all parameters
+        for name, param in self._parameters.items():
+            if param is not None:
+                self._parameters[name] = param.to(device)
+        
+        # Move all submodules recursively
+        for name, module in self._modules.items():
+            if module is not None:
+                module.to(device)
+        
+        return self
+    
+    def cuda(self):
+        """Move all parameters and buffers to GPU."""
+        return self.to('cuda')
+    
+    def cpu(self):
+        """Move all parameters and buffers to CPU."""
+        return self.to('cpu')
     
     def children(self):
         for name, module in self._modules.items():
@@ -172,7 +205,9 @@ class Optimizer:
                         param.data = param.data - param.grad * param_group['lr']
 
     def zero_grad(self):
+        from .device import get_array_module
         for param_group in self.param_groups:
             for param in param_group['params']:
                 if param.grad is not None:
-                    param.grad.data.zero_()
+                    xp = get_array_module(param.device)
+                    param.grad.data = xp.zeros_like(param.grad.data)

@@ -1,5 +1,6 @@
 pyinstaller
 numpy
+cupy-cuda12x
 torch
 pillow
 matplotlib

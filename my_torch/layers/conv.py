@@ -96,7 +96,7 @@ class Conv1d(ConvNd):
         return params
 
 class Conv2d(Module):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = (1, 1), padding: tuple = (0, 0), bias: bool = True):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = (1, 1), padding: tuple = (0, 0), bias: bool = True, device: str = 'cuda'):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels

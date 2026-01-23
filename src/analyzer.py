@@ -28,12 +28,14 @@ NUM_CLASSES = 10
 def evaluate_model(model, test_loader, num_samples=5):
     """Visualize autoencoder reconstructions."""
     model.eval()
+    device = 'cuda'
+    print(f"Evaluating model on {device}...")
     
     # Get some test samples
     test_samples = []
     for data, _ in test_loader:
         data_np = data.numpy()
-        data_custom = my_torch.Tensor(data_np[:num_samples], requires_grad=False)
+        data_custom = my_torch.Tensor(data_np[:num_samples], requires_grad=False, device=device)
         test_samples.append(data_custom)
         if len(test_samples) >= num_samples:
             break
@@ -72,7 +74,7 @@ def evaluate_model(model, test_loader, num_samples=5):
     
     for data, _ in test_loader:
         data_np = data.numpy()
-        data_custom = my_torch.Tensor(data_np, requires_grad=False)
+        data_custom = my_torch.Tensor(data_np, requires_grad=False, device=device)
         
         output = model(data_custom)
         diff = output - data_custom
@@ -120,6 +122,8 @@ def train_autoencoder(num_epochs, model, optimizer,
                      save_model=None):
     log_dict = {'train_loss_per_batch': [],
                 'train_loss_per_epoch': []}
+
+    device = 'cuda'
     
     # Use custom MSE loss if not provided
     if loss_fn is None:
@@ -143,7 +147,7 @@ def train_autoencoder(num_epochs, model, optimizer,
             
             # CONVERT PyTorch tensors to your custom tensors
             features_np = features.numpy()  # Convert to numpy
-            features_custom = my_torch.Tensor(features_np, requires_grad=True)
+            features_custom = my_torch.Tensor(features_np, requires_grad=True, device=device)
             
             # FORWARD AND BACK PROP
             print("    Forward pass...")
@@ -204,14 +208,15 @@ def compute_epoch_loss_autoencoder_custom(model, loader, loss_fn):
     
     # Just test with first few batches
     max_batches = 3
-    
+
+    device = 'cuda'
     for batch_idx, (data, _) in enumerate(loader):
         if batch_idx >= max_batches:
             break
             
         # Convert PyTorch tensor to custom tensor
         data_np = data.numpy()
-        data_custom = my_torch.Tensor(data_np, requires_grad=False)
+        data_custom = my_torch.Tensor(data_np, requires_grad=False, device=device)
         
         output = model(data_custom)
         loss = loss_fn(output, data_custom)

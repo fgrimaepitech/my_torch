@@ -4,7 +4,6 @@ from my_torch.tensor import Tensor
 import numpy as np
 import my_torch.functionnal as F
 import my_torch.derivatives as dv
-from my_torch.device import get_array_module
 
 class ConvNd(Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int = 1, padding: int = 0, bias: bool = True):
@@ -37,7 +36,6 @@ class Conv1d(ConvNd):
         super().__init__(in_channels, out_channels, kernel_size, stride, padding, bias)
 
     def forward(self, input: Tensor) -> Tensor:
-        xp = get_array_module(input.device)
         self._input = input
         self._input_padded = self._pad1d(input, self.padding) if self.padding > 0 else input
 
@@ -48,10 +46,10 @@ class Conv1d(ConvNd):
 
         windows = []
         for i in range(x_2d.shape[0]):
-            row_windows = F.as_strided(Tensor(x_2d[i], device=input.device), shape=(out_length, self.kernel_size), strides=(self.stride, 1)).data
+            row_windows = F.as_strided(Tensor(x_2d[i]), shape=(out_length, self.kernel_size), strides=(self.stride, 1)).data
             windows.append(row_windows)
 
-        windows_stacked = xp.stack(windows, axis=0)
+        windows_stacked = np.stack(windows, axis=0)
 
         windows_reshaped = windows_stacked.reshape(
             batch_size, in_channels, out_length, self.kernel_size).transpose(0, 2, 1, 3).reshape(batch_size, out_length, -1
@@ -59,35 +57,33 @@ class Conv1d(ConvNd):
 
         weight_reshaped = self.weight.data.reshape(self.out_channels, -1)
 
-        result = xp.einsum('bij,oj->bio', windows_reshaped, weight_reshaped)
+        result = np.einsum('bij,oj->bio', windows_reshaped, weight_reshaped)
         result = result.transpose(0, 2, 1)
 
         if self.bias is not None:
             result += self.bias.data.reshape(1, -1, 1)
 
-        return Tensor(result, requires_grad=input.requires_grad, device=input.device, grad_fn=Function(dv.conv1d_backward, [self._input, self.weight, self.bias], stride=self.stride, padding=self.padding))
+        return Tensor(result, requires_grad=input.requires_grad, grad_fn=Function(dv.conv1d_backward, [self._input, self.weight, self.bias], stride=self.stride, padding=self.padding))
 
     def _pad1d(self, input: Tensor, padding: int) -> Tensor:
-        xp = get_array_module(input.device)
         batch_size, channels, length = input.data.shape
         padded_length = length + 2 * padding
-        padded_data = xp.zeros((batch_size, channels, padded_length), dtype=input.data.dtype)
+        padded_data = np.zeros((batch_size, channels, padded_length))
         padded_data[:, :, padding:padding+length] = input.data
-        return Tensor(padded_data, requires_grad=input.requires_grad, device=input.device)
+        return Tensor(padded_data, requires_grad=input.requires_grad)
 
     def _unfold1d(self, input: Tensor, kernel_size: int, stride: int, out_length: int) -> Tensor:
-        xp = get_array_module(input.device)
         batch_size, channels, length = input.data.shape
-        unfolded_data = xp.zeros((batch_size, out_length, channels, kernel_size), dtype=input.data.dtype)
+        unfolded_data = np.zeros((batch_size, out_length, channels, kernel_size))
         for b in range(batch_size):
             for c in range(channels):
                 channel_data = input.data[b, c, :]
 
-                window = F.as_strided(Tensor(channel_data, device=input.device), shape=(out_length, kernel_size), strides=(stride, 1))
+                window = F.as_strided(Tensor(channel_data), shape=(out_length, kernel_size), strides=(stride, 1))
 
                 unfolded_data[b, :, c, :] = window.data
 
-        return Tensor(unfolded_data, requires_grad=input.requires_grad, device=input.device)
+        return Tensor(unfolded_data, requires_grad=input.requires_grad)
 
     def parameters(self):
         params = [self.weight]
@@ -96,7 +92,7 @@ class Conv1d(ConvNd):
         return params
 
 class Conv2d(Module):
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = (1, 1), padding: tuple = (0, 0), bias: bool = True, device: str = 'cuda'):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = (1, 1), padding: tuple = (0, 0), bias: bool = True):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -115,7 +111,6 @@ class Conv2d(Module):
             self.bias = None
 
     def forward(self, input: Tensor) -> Tensor:
-        xp = get_array_module(input.device)
         if self.padding != (0, 0):
             input = self._pad2d(input, self.padding)
 
@@ -130,7 +125,7 @@ class Conv2d(Module):
 
         weight_reshaped = self.weight.data.reshape(self.out_channels, -1)
 
-        result = xp.zeros((batch_size, out_height * out_width, self.out_channels), dtype=input.data.dtype)
+        result = np.zeros((batch_size, out_height * out_width, self.out_channels))
         for b in range(batch_size):
             result[b] = windows[b] @ weight_reshaped.T
 
@@ -139,23 +134,21 @@ class Conv2d(Module):
         if self.bias is not None:
             result += self.bias.data.reshape(1, -1, 1, 1)
             
-        return Tensor(result, requires_grad=input.requires_grad, device=input.device)
+        return Tensor(result, requires_grad=input.requires_grad)
 
 
     def _pad2d(self, x: Tensor, padding: tuple) -> Tensor:
-        xp = get_array_module(x.device)
         ph, pw = padding
         batch_size, channels, height, width = x.data.shape
         if ph == 0 and pw == 0:
             return x
-        padded_data = xp.zeros((batch_size, channels, height + 2*ph, width + 2*pw), dtype=x.data.dtype)
+        padded_data = np.zeros((batch_size, channels, height + 2*ph, width + 2*pw))
         padded_data[:, :, ph:ph+height, pw:pw+width] = x.data
-        return Tensor(padded_data, requires_grad=x.requires_grad, device=x.device)
+        return Tensor(padded_data, requires_grad=x.requires_grad)
 
     def _im2col(self, x: Tensor, kh: int, kw: int, sh: int, sw: int, out_height: int, out_width: int):
-        xp = get_array_module(x.device)
         batch_size, channels, height, width = x.data.shape
-        unfolded_data = xp.zeros((batch_size, out_height * out_width, channels * kh * kw), dtype=x.data.dtype)
+        unfolded_data = np.zeros((batch_size, out_height * out_width, channels * kh * kw))
 
         for b in range(batch_size):
             col_index = 0;

@@ -15,7 +15,7 @@ class Reshape(Module):
             new_shape[new_shape.index(-1)] = total_elements // known_elements
         
         reshaped = x.data.reshape(tuple(new_shape))
-        return Tensor(reshaped, requires_grad=x.requires_grad, device=x.device)
+        return Tensor(reshaped, requires_grad=x.requires_grad)
 
 
     def parameters(self):

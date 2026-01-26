@@ -16,7 +16,7 @@ class Flatten(Module):
             self.end_dim = len(x.data.shape) + self.end_dim
 
         flattened = x.data.reshape(batch_size, -1)
-        return Tensor(flattened, requires_grad=x.requires_grad, device=x.device)
+        return Tensor(flattened, requires_grad=x.requires_grad)
 
     def parameters(self):
         return []

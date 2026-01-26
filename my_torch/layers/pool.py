@@ -1,7 +1,6 @@
 from my_torch.neural_network import Module
 from my_torch.tensor import Tensor
 import numpy as np
-from my_torch.device import get_array_module
 
 class MaxPool2d(Module):
     def __init__(self, kernel_size: tuple, stride: tuple = (1, 1), padding: tuple = (0, 0), dilation: tuple = (1, 1)):
@@ -12,7 +11,6 @@ class MaxPool2d(Module):
         self.dilation = dilation if isinstance(dilation, tuple) else (dilation, dilation)
 
     def forward(self, x: Tensor) -> Tensor:
-        xp = get_array_module(x.device)
         if len(x.data.shape) != 4:
             raise ValueError("MaxPool2d only supports 4D input tensors")
 
@@ -33,7 +31,7 @@ class MaxPool2d(Module):
         out_height = ((padded_height - kh) // sh) + 1
         out_width = ((padded_width - kw) // sw) + 1
 
-        result = xp.zeros((batch_size, channels, out_height, out_width), dtype=x.data.dtype)
+        result = np.zeros((batch_size, channels, out_height, out_width))
         for b in range(batch_size):
             for c in range(channels):
                 for i in range(out_height):
@@ -44,20 +42,19 @@ class MaxPool2d(Module):
                         w_end = w_start + kw
                         
                         window = x_padded.data[b, c, h_start:h_end, w_start:w_end]
-                        result[b, c, i, j] = xp.max(window)
+                        result[b, c, i, j] = np.max(window)
 
-        return Tensor(result, requires_grad=x.requires_grad, device=x.device)
+        return Tensor(result, requires_grad=x.requires_grad)
 
     def _pad2d(self, x: Tensor, padding: tuple) -> Tensor:
-        xp = get_array_module(x.device)
         ph, pw = padding
         batch_size, channels, height, width = x.data.shape
         if ph == 0 and pw == 0:
             return x
-        min_val = xp.finfo(x.data.dtype).min if xp.issubdtype(x.data.dtype, xp.floating) else xp.iinfo(x.data.dtype).min
-        padded_data = xp.full((batch_size, channels, height + 2*ph, width + 2*pw), min_val, dtype=x.data.dtype)
+        min_val = np.finfo(x.data.dtype).min if np.issubdtype(x.data.dtype, np.floating) else np.iinfo(x.data.dtype).min
+        padded_data = np.full((batch_size, channels, height + 2*ph, width + 2*pw), min_val, dtype=x.data.dtype)
         padded_data[:, :, ph:ph+height, pw:pw+width] = x.data
-        return Tensor(padded_data, requires_grad=x.requires_grad, device=x.device)
+        return Tensor(padded_data, requires_grad=x.requires_grad)
 
     def parameters(self):
         return []
@@ -71,7 +68,6 @@ class AvgPool2d(Module):
         self.padding = padding if isinstance(padding, tuple) else (padding, padding)
 
     def forward(self, x: Tensor) -> Tensor:
-        xp = get_array_module(x.device)
         if len(x.data.shape) != 4:
             raise ValueError("AvgPool2d only supports 4D input tensors")
 
@@ -92,7 +88,7 @@ class AvgPool2d(Module):
         out_height = ((padded_height - kh) // sh) + 1
         out_width = ((padded_width - kw) // sw) + 1
 
-        result = xp.zeros((batch_size, channels, out_height, out_width), dtype=x.data.dtype)
+        result = np.zeros((batch_size, channels, out_height, out_width))
         for b in range(batch_size):
             for c in range(channels):
                 for i in range(out_height):
@@ -103,19 +99,18 @@ class AvgPool2d(Module):
                         w_end = w_start + kw
 
                         window = x_padded.data[b, c, h_start:h_end, w_start:w_end]
-                        result[b, c, i, j] = xp.mean(window)
+                        result[b, c, i, j] = np.mean(window)
 
-        return Tensor(result, requires_grad=x.requires_grad, device=x.device)
+        return Tensor(result, requires_grad=x.requires_grad)
 
     def _pad2d(self, x: Tensor, padding: tuple) -> Tensor:
-        xp = get_array_module(x.device)
         ph, pw = padding
         batch_size, channels, height, width = x.data.shape
         if ph == 0 and pw == 0:
             return x
-        padded_data = xp.zeros((batch_size, channels, height + 2*ph, width + 2*pw), dtype=x.data.dtype)
+        padded_data = np.zeros((batch_size, channels, height + 2*ph, width + 2*pw), dtype=x.data.dtype)
         padded_data[:, :, ph:ph+height, pw:pw+width] = x.data
-        return Tensor(padded_data, requires_grad=x.requires_grad, device=x.device)
+        return Tensor(padded_data, requires_grad=x.requires_grad)
 
     def parameters(self):
         return []

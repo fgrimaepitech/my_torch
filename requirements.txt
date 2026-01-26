@@ -1,7 +1,8 @@
 pyinstaller
 numpy
-cupy-cuda12x
 torch
 pillow
 matplotlib
 torchvision
+mlx
+mlx-metal

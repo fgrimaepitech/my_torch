@@ -1,7 +1,6 @@
 from my_torch.neural_network import Module
 from my_torch.tensor import Tensor
 import numpy as np
-from my_torch.device import get_array_module
 
 class Dropout(Module):
     def __init__(self, p: float = 0.5, inplace: bool = False):
@@ -17,16 +16,15 @@ class Dropout(Module):
         if not self.training or self.p == 0:
             return x
         
-        xp = get_array_module(x.device)
         scale = 1.0 / (1.0 - self.p)
-        mask = (xp.random.rand(*x.data.shape) > self.p).astype(x.data.dtype) * scale
+        mask = (np.random.rand(*x.data.shape) > self.p).astype(np.float32) * scale
 
         self.mask = mask
 
         if self.inplace:
             x.data *= mask
             return x
-        return Tensor(x.data * mask, requires_grad=x.requires_grad, device=x.device)
+        return Tensor(x.data * mask, requires_grad=x.requires_grad)
 
     def eval(self):
         self.training = False

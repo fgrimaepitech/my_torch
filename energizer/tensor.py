@@ -68,43 +68,90 @@ class Tensor:
         self.shape = self.data.shape
         self.device = 'gpu'
 
+    def cpu(self) -> 'Tensor':
+        if self.device == 'cpu':
+            return self
+        return Tensor(np.array(self.data), requires_grad=self.requires_grad, device='cpu')
+
+    def gpu(self) -> 'Tensor':
+        if self.device == 'gpu':
+            return self
+        return Tensor(mx.array(self.data), requires_grad=self.requires_grad, device='gpu')
+
+    def to(self, device: str) -> 'Tensor':
+        if self.device == device:
+            return self
+        if device == 'cpu':
+            return self.cpu()
+        elif device == 'gpu':
+            return self.gpu()
+        else:
+            raise ValueError(f"Invalid device: {device}")
+
+    def numpy(self) -> np.ndarray:
+        if isinstance(self.data, mx.array):
+            return np.array(self.data)
+        return self.data.copy()
+
+    def mlx(self) -> mx.array:
+        if isinstance(self.data, mx.array):
+            return self.data
+        return mx.array(self.data)
+
+    def _get_other_data(self, other: Union[int, float, 'Tensor']):
+        if isinstance(other, (int, float)):
+            return other
+        elif isinstance(other, Tensor):
+            if self.device == 'cpu':
+                return other.cpu().data
+            elif self.device == 'gpu':
+                return other.gpu().data
+        return other.data
+
     def requires_grad_(self, requires_grad: bool = True):
         self.requires_grad = requires_grad
         return self
 
     def __mul__(self, other: Union[int, float, 'Tensor']) -> 'Tensor':
-        return Tensor(self.data * (other if isinstance(other, (int, float)) else other.data), requires_grad=self.requires_grad, grad_fn=Function(dv.mul_backward, [self, other]))
+        other_data = self._get_other_data(other)
+        return Tensor(self.data * other_data, requires_grad=self.requires_grad, grad_fn=Function(dv.mul_backward, [self, other]), device=self.device)
     
     def __rmul__(self, other: Union[int, float]) -> 'Tensor':
-        return Tensor(other * self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.mul_backward, [self, other]))
+        return Tensor(other * self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.mul_backward, [self, other]), device=self.device)
 
     def __add__(self, other: Union[int, float, 'Tensor']) -> 'Tensor':
-        return Tensor(self.data + (other if isinstance(other, (int, float)) else other.data), requires_grad=self.requires_grad, grad_fn=Function(dv.add_backward, [self, other]))
+        other_data = self._get_other_data(other)
+        return Tensor(self.data + other_data, requires_grad=self.requires_grad, grad_fn=Function(dv.add_backward, [self, other]), device=self.device)
 
     def __sub__(self, other: Union[int, float, 'Tensor']) -> 'Tensor':
-        return Tensor(self.data - (other if isinstance(other, (int, float)) else other.data), requires_grad=self.requires_grad, grad_fn=Function(dv.sub_backward, [self, other]))
+        other_data = self._get_other_data(other)
+        return Tensor(self.data - other_data, requires_grad=self.requires_grad, grad_fn=Function(dv.sub_backward, [self, other]), device=self.device)
 
     def __neg__(self) -> 'Tensor':
-        return Tensor(isinstance(self.data, (int, float)) -self.data if isinstance(self.data, (int, float)) else -self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.neg_backward, [self]))
+        return Tensor(isinstance(self.data, (int, float)) -self.data if isinstance(self.data, (int, float)) else -self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.neg_backward, [self]), device=self.device)
 
     def __truediv__(self, other: Union[int, float, 'Tensor']) -> 'Tensor':
-        return Tensor(self.data / (other if isinstance(other, (int, float)) else other.data), requires_grad=self.requires_grad, grad_fn=Function(dv.truediv_backward, [self, other]))
+        other_data = self._get_other_data(other)
+        return Tensor(self.data / other_data, requires_grad=self.requires_grad, grad_fn=Function(dv.truediv_backward, [self, other]), device=self.device)
 
     def __rtruediv__(self, other: Union[int, float]) -> 'Tensor':
-        return Tensor(other / self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.truediv_backward, [other, self]))
+        other = self._get_other_data(other)
+        return Tensor(other / self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.truediv_backward, [other, self]), device=self.device)
 
-    def __matmul__(self, other: 'Tensor') -> 'Tensor':        
+    def __matmul__(self, other: 'Tensor') -> 'Tensor':     
+        other_data = self._get_other_data(other)   
         return Tensor(
-            self.data @ other.data, 
+            self.data @ other_data, 
             requires_grad=self.requires_grad or other.requires_grad,
-            grad_fn=Function(dv.matmul_backward, [self, other])
+            grad_fn=Function(dv.matmul_backward, [self, other]),
+            device=self.device
         )
 
     def __rmatmul__(self, other: 'Tensor') -> 'Tensor':
         return self.__matmul__(other)
 
     def __getitem__(self, key):
-        return Tensor(self.data[key], requires_grad=self.requires_grad, grad_fn=Function(dv.getitem_backward, [self, key]))
+        return Tensor(self.data[key], requires_grad=self.requires_grad, grad_fn=Function(dv.getitem_backward, [self, key]), device=self.device)
 
     def __setitem__(self, key, value: Union[int, float, 'Tensor']):
         if isinstance(value, Tensor):
@@ -112,12 +159,18 @@ class Tensor:
         else:
             value_data = value
 
-        new_data = self.data.copy()
-        new_data[key] = value_data
+        if isinstance(self.data, mx.array):
+            temp_np = np.array(self.data)
+            temp_np[key] = value_data
+            new_data = mx.array(temp_np)
+        else:
+            new_data = self.data.copy()
+            new_data[key] = value_data
+
         if self.requires_grad:
             self.grad_fn = Function(dv.setitem_backward, [self, key, value])
-        else:
-            self.data = new_data
+
+        self.data = new_data
 
     @property
     def T(self) -> 'Tensor':
@@ -132,32 +185,62 @@ class Tensor:
 
         scalar_value = self.data.item()
         if self.requires_grad:
-            self.grad_fn = Tensor(scalar_value, requires_grad=self.requires_grad, grad_fn=Function(dv.item_backward, [self]))
+            self.grad_fn = Tensor(scalar_value, requires_grad=self.requires_grad, grad_fn=Function(dv.item_backward, [self]), device=self.device)
         return scalar_value
 
     def copy(self) -> 'Tensor':
         return Tensor(self.data.copy(), requires_grad=self.requires_grad, grad_fn=self.grad_fn)
 
     def sum(self, dim: Optional[int] = None) -> 'Tensor':
-        result = np.sum(self.data, axis=dim)
-        if not isinstance(result, np.ndarray):
-            result = np.array(result)
-        return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.sum_backward, [self, dim]))
+        if isinstance(self.data, mx.array):
+            result = mx.sum(self.data, axis=dim)
+        else:
+            result = np.sum(self.data, axis=dim)
+        return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.sum_backward, [self, dim]), device=self.device)
 
     def mean(self, dim: Optional[int] = None) -> 'Tensor':
-        result = np.mean(self.data, axis=dim)
-        if not isinstance(result, np.ndarray):
-            result = np.array(result)
-        return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.mean_backward, [self, dim]))
+        if isinstance(self.data, mx.array):
+            result = mx.mean(self.data, axis=dim)   
+        else:
+            result = np.mean(self.data, axis=dim)
+        return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.mean_backward, [self, dim]), device=self.device)
 
     @staticmethod
-    def randn(*args, **kwargs):
-        return Tensor(np.random.randn(*args, **kwargs), requires_grad=False)
+    def randn(*args, device: str = 'cpu', **kwargs):
+        if device == 'gpu':
+            data = mx.random.normal(*args, **kwargs)
+        else:
+            data = np.random.randn(*args, **kwargs)
+
+        return Tensor(data, requires_grad=False, device=device)
+
+    @staticmethod
+    def zeros(shape, device: str = 'cpu'):
+        if device == 'gpu':
+            data = mx.zeros(shape)
+        else:
+            data = np.zeros(shape)
+        return Tensor(data, requires_grad=False, device=device)
+
+    @staticmethod
+    def ones(shape, device: str = 'cpu'):
+        if device == 'gpu':
+            data = mx.ones(shape)
+        else:
+            data = np.ones(shape)
+        return Tensor(data, requires_grad=False, device=device)
 
     def backward(self, grad_outputs: Optional[Tensor] = None):
         if grad_outputs is None:
-            grad_outputs = Tensor(np.ones_like(self.data))
+            if isinstance(self.data, mx.array):
+                grad_outputs = mx.ones_like(self.data)
+            else:
+                grad_outputs = np.ones_like(self.data)
+            grad_outputs = Tensor(np.ones_like(self.data), device=self.device)
         if self.requires_grad and self.grad_fn is not None:
+            if self.device != grad_outputs.device:
+                grad_outputs = grad_outputs.to(self.device)
+
             self.grad_fn.backward([grad_outputs])
     
 

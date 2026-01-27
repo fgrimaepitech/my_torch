@@ -1,5 +1,5 @@
 """
-Tests comparing my_torch AvgPool2d layer with PyTorch AvgPool2d layer.
+Tests comparing energizer AvgPool2d layer with PyTorch AvgPool2d layer.
 Tests forward pass, backward pass, and various configurations.
 """
 import unittest
@@ -9,9 +9,9 @@ import torch.nn as nn
 import sys
 import os
 
-# Add parent directory to path to import my_torch
+# Add parent directory to path to import energizer
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import my_torch
+import energizer
 
 
 class TestAvgPool2d(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestAvgPool2d(unittest.TestCase):
         torch.manual_seed(42)
     
     def assert_tensors_close(self, my_tensor, torch_tensor, msg=""):
-        """Helper to compare my_torch tensor with PyTorch tensor"""
+        """Helper to compare energizer tensor with PyTorch tensor"""
         # Convert PyTorch tensor to numpy if needed
         if isinstance(torch_tensor, torch.Tensor):
             torch_data = torch_tensor.detach().numpy()
@@ -47,12 +47,12 @@ class TestAvgPool2d(unittest.TestCase):
         batch_size, channels, height, width = 4, 3, 32, 32
         
         # Create layers
-        my_layer = my_torch.AvgPool2d(kernel_size=kernel_size, stride=stride)
+        my_layer = energizer.AvgPool2d(kernel_size=kernel_size, stride=stride)
         torch_layer = nn.AvgPool2d(kernel_size=kernel_size, stride=stride)
         
         # Create input
         input_data = np.random.randn(batch_size, channels, height, width).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -68,12 +68,12 @@ class TestAvgPool2d(unittest.TestCase):
         batch_size, channels, height, width = 4, 3, 32, 32
         
         # Create layers
-        my_layer = my_torch.AvgPool2d(kernel_size=kernel_size, stride=stride)
+        my_layer = energizer.AvgPool2d(kernel_size=kernel_size, stride=stride)
         torch_layer = nn.AvgPool2d(kernel_size=kernel_size, stride=stride)
         
         # Create input
         input_data = np.random.randn(batch_size, channels, height, width).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -89,12 +89,12 @@ class TestAvgPool2d(unittest.TestCase):
         batch_size, channels, height, width = 4, 3, 32, 32
         
         # Create layers
-        my_layer = my_torch.AvgPool2d(kernel_size=kernel_size, stride=stride)
+        my_layer = energizer.AvgPool2d(kernel_size=kernel_size, stride=stride)
         torch_layer = nn.AvgPool2d(kernel_size=kernel_size, stride=stride)
         
         # Create input
         input_data = np.random.randn(batch_size, channels, height, width).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -110,12 +110,12 @@ class TestAvgPool2d(unittest.TestCase):
         batch_size, channels, height, width = 4, 3, 32, 32
         
         # Create layers
-        my_layer = my_torch.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
+        my_layer = energizer.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
         torch_layer = nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
         
         # Create input
         input_data = np.random.randn(batch_size, channels, height, width).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -131,12 +131,12 @@ class TestAvgPool2d(unittest.TestCase):
         batch_size, channels, height, width = 4, 3, 32, 32
         
         # Create layers
-        my_layer = my_torch.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
+        my_layer = energizer.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
         torch_layer = nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
         
         # Create input
         input_data = np.random.randn(batch_size, channels, height, width).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -158,12 +158,12 @@ class TestAvgPool2d(unittest.TestCase):
             with self.subTest(batch_size=batch_size, channels=channels, 
                             height=height, width=width, kernel_size=kernel_size, stride=stride):
                 # Create layers
-                my_layer = my_torch.AvgPool2d(kernel_size=kernel_size, stride=stride)
+                my_layer = energizer.AvgPool2d(kernel_size=kernel_size, stride=stride)
                 torch_layer = nn.AvgPool2d(kernel_size=kernel_size, stride=stride)
                 
                 # Create input
                 input_data = np.random.randn(batch_size, channels, height, width).astype(np.float32)
-                my_input = my_torch.Tensor(input_data)
+                my_input = energizer.Tensor(input_data)
                 torch_input = torch.tensor(input_data)
                 
                 # Forward pass
@@ -191,12 +191,12 @@ class TestAvgPool2d(unittest.TestCase):
                             height=height, width=width, kernel_size=kernel_size, 
                             stride=stride, padding=padding):
                 # Create layers
-                my_layer = my_torch.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
+                my_layer = energizer.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
                 torch_layer = nn.AvgPool2d(kernel_size=kernel_size, stride=stride, padding=padding)
                 
                 # Create input
                 input_data = np.random.randn(batch_size, channels, height, width).astype(np.float32)
-                my_input = my_torch.Tensor(input_data)
+                my_input = energizer.Tensor(input_data)
                 torch_input = torch.tensor(input_data)
                 
                 # Forward pass
@@ -206,7 +206,7 @@ class TestAvgPool2d(unittest.TestCase):
                 # Compare shapes
                 self.assertEqual(
                     my_output.data.shape, tuple(torch_output.shape),
-                    f"Output shape mismatch: my_torch={my_output.data.shape}, PyTorch={torch_output.shape}"
+                    f"Output shape mismatch: energizer={my_output.data.shape}, PyTorch={torch_output.shape}"
                 )
     
     # ========== BACKWARD PASS TESTS ==========
@@ -217,12 +217,12 @@ class TestAvgPool2d(unittest.TestCase):
         batch_size, channels, height, width = 4, 3, 32, 32
         
         # Create layers
-        my_layer = my_torch.AvgPool2d(kernel_size=kernel_size, stride=stride)
+        my_layer = energizer.AvgPool2d(kernel_size=kernel_size, stride=stride)
         torch_layer = nn.AvgPool2d(kernel_size=kernel_size, stride=stride)
         
         # Create input with requires_grad
         input_data = np.random.randn(batch_size, channels, height, width).astype(np.float32)
-        my_input = my_torch.Tensor(input_data, requires_grad=True)
+        my_input = energizer.Tensor(input_data, requires_grad=True)
         torch_input = torch.tensor(input_data, requires_grad=True)
         
         # Forward pass

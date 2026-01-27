@@ -1,5 +1,5 @@
 """
-Tests comparing my_torch operators with PyTorch operators.
+Tests comparing energizer operators with PyTorch operators.
 Tests mul, rmul, add, sub, and neg operations.
 """
 import unittest
@@ -8,9 +8,9 @@ import torch
 import sys
 import os
 
-# Add parent directory to path to import my_torch
+# Add parent directory to path to import energizer
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import my_torch
+import energizer
 
 
 class TestOperators(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestOperators(unittest.TestCase):
         self.atol = 1e-8  # Absolute tolerance for floating point comparison
     
     def assert_tensors_close(self, my_tensor, torch_tensor, msg=""):
-        """Helper to compare my_torch tensor with PyTorch tensor"""
+        """Helper to compare energizer tensor with PyTorch tensor"""
         # Convert PyTorch tensor to numpy if needed
         if isinstance(torch_tensor, torch.Tensor):
             torch_data = torch_tensor.detach().numpy()
@@ -42,9 +42,9 @@ class TestOperators(unittest.TestCase):
     
     def test_mul_tensor_tensor_1d(self):
         """Test tensor * tensor for 1D tensors"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
-        b = my_torch.tensor([4.0, 5.0, 6.0])
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b = energizer.tensor([4.0, 5.0, 6.0])
         result = a * b
         result.backward()
         
@@ -57,8 +57,8 @@ class TestOperators(unittest.TestCase):
 
     def test_rmul_tensor_scalar(self):
         """Test scalar * tensor"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result = 2 * a
         result.backward()
         
@@ -72,9 +72,9 @@ class TestOperators(unittest.TestCase):
     
     def test_add_tensor_tensor_1d(self):
         """Test tensor + tensor for 1D tensors"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
-        b = my_torch.tensor([4.0, 5.0, 6.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b = energizer.tensor([4.0, 5.0, 6.0], requires_grad=True)
         result = a + b
         result.backward()
         
@@ -90,8 +90,8 @@ class TestOperators(unittest.TestCase):
     
     def test_add_tensor_scalar(self):
         """Test tensor + scalar"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result = a + 2.0
         result.backward()
         
@@ -105,9 +105,9 @@ class TestOperators(unittest.TestCase):
     
     def test_add_tensor_tensor_2d(self):
         """Test tensor + tensor for 2D tensors"""
-        # my_torch
-        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
-        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
+        # energizer
+        a = energizer.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b = energizer.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
         result = a + b
         result.backward()
         
@@ -125,9 +125,9 @@ class TestOperators(unittest.TestCase):
     
     def test_sub_tensor_tensor_1d(self):
         """Test tensor - tensor for 1D tensors"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
-        b = my_torch.tensor([4.0, 5.0, 6.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b = energizer.tensor([4.0, 5.0, 6.0], requires_grad=True)
         result = a - b
         result.backward()
         
@@ -143,8 +143,8 @@ class TestOperators(unittest.TestCase):
     
     def test_sub_tensor_scalar(self):
         """Test tensor - scalar"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result = a - 2.0
         result.backward()
         
@@ -158,9 +158,9 @@ class TestOperators(unittest.TestCase):
     
     def test_sub_tensor_tensor_2d(self):
         """Test tensor - tensor for 2D tensors"""
-        # my_torch
-        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
-        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
+        # energizer
+        a = energizer.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b = energizer.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
         result = a - b
         result.backward()
         
@@ -178,8 +178,8 @@ class TestOperators(unittest.TestCase):
     
     def test_neg_tensor_1d(self):
         """Test -tensor for 1D tensors"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result = -a
         result.backward()
         
@@ -193,8 +193,8 @@ class TestOperators(unittest.TestCase):
     
     def test_neg_tensor_2d(self):
         """Test -tensor for 2D tensors"""
-        # my_torch
-        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        # energizer
+        a = energizer.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
         result = -a
         result.backward()
         
@@ -208,8 +208,8 @@ class TestOperators(unittest.TestCase):
     
     def test_neg_tensor_negative_values(self):
         """Test -tensor with negative values"""
-        # my_torch
-        a = my_torch.tensor([-1.0, -2.0, 3.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([-1.0, -2.0, 3.0], requires_grad=True)
         result = -a
         result.backward()
         
@@ -225,8 +225,8 @@ class TestOperators(unittest.TestCase):
     
     def test_mul_tensor_scalar(self):
         """Test tensor * scalar"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result = a * 2.0
         result.backward()
         
@@ -240,9 +240,9 @@ class TestOperators(unittest.TestCase):
     
     def test_mul_tensor_tensor_2d(self):
         """Test tensor * tensor for 2D tensors"""
-        # my_torch
-        a = my_torch.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
-        b = my_torch.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
+        # energizer
+        a = energizer.tensor([[1.0, 2.0], [3.0, 4.0]], requires_grad=True)
+        b = energizer.tensor([[5.0, 6.0], [7.0, 8.0]], requires_grad=True)
         result = a * b
         result.backward()
         
@@ -259,9 +259,9 @@ class TestOperators(unittest.TestCase):
     # ========== TRUEDIV TESTS ==========
     def test_truediv_tensor_tensor_1d(self):
         """Test tensor / tensor for 1D tensors"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
-        b = my_torch.tensor([4.0, 5.0, 6.0])
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        b = energizer.tensor([4.0, 5.0, 6.0])
         result = a / b
         result.backward()
         
@@ -274,8 +274,8 @@ class TestOperators(unittest.TestCase):
 
     def test_truediv_tensor_scalar(self):
         """Test tensor / scalar"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result = a / 2.0
         result.backward()
         
@@ -288,8 +288,8 @@ class TestOperators(unittest.TestCase):
     # ========== RTRUEDIV TESTS ==========
     def test_rtruediv_scalar_tensor(self):
         """Test scalar / tensor"""
-        # my_torch
-        a = my_torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
+        # energizer
+        a = energizer.tensor([1.0, 2.0, 3.0], requires_grad=True)
         result = 2.0 / a
         result.backward()
         

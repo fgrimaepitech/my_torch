@@ -1,5 +1,5 @@
 """
-Tests comparing my_torch Conv1d layer with PyTorch Conv1d layer.
+Tests comparing energizer Conv1d layer with PyTorch Conv1d layer.
 Tests forward pass, backward pass, and various configurations.
 """
 import unittest
@@ -9,9 +9,9 @@ import torch.nn as nn
 import sys
 import os
 
-# Add parent directory to path to import my_torch
+# Add parent directory to path to import energizer
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import my_torch
+import energizer
 
 
 class TestConv1d(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestConv1d(unittest.TestCase):
         torch.manual_seed(42)
     
     def assert_tensors_close(self, my_tensor, torch_tensor, msg=""):
-        """Helper to compare my_torch tensor with PyTorch tensor"""
+        """Helper to compare energizer tensor with PyTorch tensor"""
         # Convert PyTorch tensor to numpy if needed
         if isinstance(torch_tensor, torch.Tensor):
             torch_data = torch_tensor.detach().numpy()
@@ -45,7 +45,7 @@ class TestConv1d(unittest.TestCase):
         weight_data = torch_layer.weight.data.detach().numpy()
         bias_data = torch_layer.bias.data.detach().numpy() if torch_layer.bias is not None else None
         
-        # Set my_torch weights and biases
+        # Set energizer weights and biases
         my_layer.weight.data = weight_data
         if bias_data is not None:
             my_layer.bias.data = bias_data
@@ -59,7 +59,7 @@ class TestConv1d(unittest.TestCase):
         batch_size, length = 20, 50
         
         # Create layers
-        my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+        my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         
         # Set same weights
@@ -67,7 +67,7 @@ class TestConv1d(unittest.TestCase):
         
         # Create input
         input_data = np.random.randn(batch_size, in_channels, length).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -84,7 +84,7 @@ class TestConv1d(unittest.TestCase):
         batch_size, length = 10, 30
         
         # Create layers
-        my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+        my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         
         # Set same weights
@@ -92,7 +92,7 @@ class TestConv1d(unittest.TestCase):
         
         # Create input
         input_data = np.random.randn(batch_size, in_channels, length).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -109,7 +109,7 @@ class TestConv1d(unittest.TestCase):
         batch_size, length = 10, 30
         
         # Create layers
-        my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+        my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         
         # Set same weights
@@ -117,7 +117,7 @@ class TestConv1d(unittest.TestCase):
         
         # Create input
         input_data = np.random.randn(batch_size, in_channels, length).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -134,7 +134,7 @@ class TestConv1d(unittest.TestCase):
         batch_size, length = 8, 20
         
         # Create layers
-        my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+        my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         
         # Set same weights
@@ -142,7 +142,7 @@ class TestConv1d(unittest.TestCase):
         
         # Create input
         input_data = np.random.randn(batch_size, in_channels, length).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -166,7 +166,7 @@ class TestConv1d(unittest.TestCase):
         for kernel_size, _, stride, padding in test_cases:
             with self.subTest(kernel_size=kernel_size, stride=stride, padding=padding):
                 # Create layers
-                my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+                my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
                 torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
                 
                 # Set same weights
@@ -174,7 +174,7 @@ class TestConv1d(unittest.TestCase):
                 
                 # Create input
                 input_data = np.random.randn(batch_size, in_channels, length).astype(np.float32)
-                my_input = my_torch.Tensor(input_data)
+                my_input = energizer.Tensor(input_data)
                 torch_input = torch.tensor(input_data)
                 
                 # Forward pass
@@ -194,7 +194,7 @@ class TestConv1d(unittest.TestCase):
         batch_size, length = 10, 30
         
         # Create layers without bias
-        my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size, stride, padding, bias=False)
+        my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size, stride, padding, bias=False)
         torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding, bias=False)
         
         # Set same weights
@@ -202,7 +202,7 @@ class TestConv1d(unittest.TestCase):
         
         # Create input
         input_data = np.random.randn(batch_size, in_channels, length).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -227,12 +227,12 @@ class TestConv1d(unittest.TestCase):
             with self.subTest(in_channels=in_channels, out_channels=out_channels, 
                             kernel_size=kernel_size, stride=stride, padding=padding):
                 # Create layers
-                my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+                my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
                 torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
                 
                 # Create input
                 input_data = np.random.randn(batch_size, in_channels, length).astype(np.float32)
-                my_input = my_torch.Tensor(input_data)
+                my_input = energizer.Tensor(input_data)
                 torch_input = torch.tensor(input_data)
                 
                 # Forward pass
@@ -242,7 +242,7 @@ class TestConv1d(unittest.TestCase):
                 # Compare shapes
                 self.assertEqual(
                     my_output.data.shape, tuple(torch_output.shape),
-                    f"Output shape mismatch: my_torch={my_output.data.shape}, PyTorch={torch_output.shape}"
+                    f"Output shape mismatch: energizer={my_output.data.shape}, PyTorch={torch_output.shape}"
                 )
     
     def test_conv1d_weight_shape(self):
@@ -250,13 +250,13 @@ class TestConv1d(unittest.TestCase):
         in_channels, out_channels = 3, 16
         kernel_size = 3
         
-        my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size)
+        my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size)
         torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size)
         
         # Compare weight shapes
         self.assertEqual(
             my_layer.weight.data.shape, tuple(torch_layer.weight.data.shape),
-            f"Weight shape mismatch: my_torch={my_layer.weight.data.shape}, PyTorch={torch_layer.weight.data.shape}"
+            f"Weight shape mismatch: energizer={my_layer.weight.data.shape}, PyTorch={torch_layer.weight.data.shape}"
         )
     
     def test_conv1d_parameters_count(self):
@@ -264,7 +264,7 @@ class TestConv1d(unittest.TestCase):
         in_channels, out_channels = 3, 16
         kernel_size = 3
         
-        my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size)
+        my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size)
         torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size)
         
         # Count parameters
@@ -273,7 +273,7 @@ class TestConv1d(unittest.TestCase):
         
         self.assertEqual(
             my_params, torch_params,
-            f"Parameter count mismatch: my_torch={my_params}, PyTorch={torch_params}"
+            f"Parameter count mismatch: energizer={my_params}, PyTorch={torch_params}"
         )
     
     # ========== BACKWARD PASS TESTS ==========
@@ -285,7 +285,7 @@ class TestConv1d(unittest.TestCase):
         batch_size, length = 5, 20
         
         # Create layers
-        my_layer = my_torch.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
+        my_layer = energizer.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         torch_layer = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding)
         
         # Set same weights
@@ -293,7 +293,7 @@ class TestConv1d(unittest.TestCase):
         
         # Create input with requires_grad
         input_data = np.random.randn(batch_size, in_channels, length).astype(np.float32)
-        my_input = my_torch.Tensor(input_data, requires_grad=True)
+        my_input = energizer.Tensor(input_data, requires_grad=True)
         torch_input = torch.tensor(input_data, requires_grad=True)
         
         # Forward pass

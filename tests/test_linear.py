@@ -1,5 +1,5 @@
 """
-Tests comparing my_torch Linear layer with PyTorch Linear layer.
+Tests comparing energizer Linear layer with PyTorch Linear layer.
 Tests forward pass, backward pass, and various configurations.
 """
 import unittest
@@ -9,9 +9,9 @@ import torch.nn as nn
 import sys
 import os
 
-# Add parent directory to path to import my_torch
+# Add parent directory to path to import energizer
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import my_torch
+import energizer
 
 
 class TestLinear(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestLinear(unittest.TestCase):
         torch.manual_seed(42)
     
     def assert_tensors_close(self, my_tensor, torch_tensor, msg=""):
-        """Helper to compare my_torch tensor with PyTorch tensor"""
+        """Helper to compare energizer tensor with PyTorch tensor"""
         # Convert PyTorch tensor to numpy if needed
         if isinstance(torch_tensor, torch.Tensor):
             torch_data = torch_tensor.detach().numpy()
@@ -45,7 +45,7 @@ class TestLinear(unittest.TestCase):
         weight_data = torch_layer.weight.data.detach().numpy()
         bias_data = torch_layer.bias.data.detach().numpy() if torch_layer.bias is not None else None
         
-        # Set my_torch weights and biases
+        # Set energizer weights and biases
         my_layer.weight.data = weight_data
         if bias_data is not None:
             my_layer.bias.data = bias_data
@@ -58,7 +58,7 @@ class TestLinear(unittest.TestCase):
         batch_size = 128
         
         # Create layers
-        my_layer = my_torch.Linear(in_features, out_features)
+        my_layer = energizer.Linear(in_features, out_features)
         torch_layer = nn.Linear(in_features, out_features)
         
         # Set same weights
@@ -66,7 +66,7 @@ class TestLinear(unittest.TestCase):
         
         # Create input
         input_data = np.random.randn(batch_size, in_features).astype(np.float32)
-        my_input = my_torch.tensor(input_data)
+        my_input = energizer.tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass
@@ -82,7 +82,7 @@ class TestLinear(unittest.TestCase):
         batch_size = 128
         
         # Create layers
-        my_layer = my_torch.Linear(in_features, out_features, bias=False)
+        my_layer = energizer.Linear(in_features, out_features, bias=False)
         torch_layer = nn.Linear(in_features, out_features, bias=False)
         
         # Set same weights
@@ -90,7 +90,7 @@ class TestLinear(unittest.TestCase):
         
         # Create input
         input_data = np.random.randn(batch_size, in_features).astype(np.float32)
-        my_input = my_torch.tensor(input_data)
+        my_input = energizer.tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Forward pass

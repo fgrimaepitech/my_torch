@@ -6,7 +6,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-import my_torch
+import energizer
 # Remove these imports or keep only for DataLoader
 import torch
 # Remove: import torch.nn as nn
@@ -35,7 +35,7 @@ def evaluate_model(model, test_loader, num_samples=5):
     test_samples = []
     for data, _ in test_loader:
         data_np = data.numpy()
-        data_custom = my_torch.Tensor(data_np[:num_samples], requires_grad=False, device=device)
+        data_custom = energizer.Tensor(data_np[:num_samples], requires_grad=False, device=device)
         test_samples.append(data_custom)
         if len(test_samples) >= num_samples:
             break
@@ -74,7 +74,7 @@ def evaluate_model(model, test_loader, num_samples=5):
     
     for data, _ in test_loader:
         data_np = data.numpy()
-        data_custom = my_torch.Tensor(data_np, requires_grad=False, device=device)
+        data_custom = energizer.Tensor(data_np, requires_grad=False, device=device)
         
         output = model(data_custom)
         diff = output - data_custom
@@ -147,7 +147,7 @@ def train_autoencoder(num_epochs, model, optimizer,
             
             # CONVERT PyTorch tensors to your custom tensors
             features_np = features.numpy()  # Convert to numpy
-            features_custom = my_torch.Tensor(features_np, requires_grad=True, device=device)
+            features_custom = energizer.Tensor(features_np, requires_grad=True, device=device)
             
             # FORWARD AND BACK PROP
             print("    Forward pass...")
@@ -196,7 +196,7 @@ def train_autoencoder(num_epochs, model, optimizer,
     print('\nTotal Training Time: %.2f min' % ((time.time() - start_time)/60))
     
     if save_model is not None:
-        # Implement your own save function in my_torch
+        # Implement your own save function in energizer
         model.save_state_dict(save_model)
     
     return log_dict
@@ -216,7 +216,7 @@ def compute_epoch_loss_autoencoder_custom(model, loader, loss_fn):
             
         # Convert PyTorch tensor to custom tensor
         data_np = data.numpy()
-        data_custom = my_torch.Tensor(data_np, requires_grad=False, device=device)
+        data_custom = energizer.Tensor(data_np, requires_grad=False, device=device)
         
         output = model(data_custom)
         loss = loss_fn(output, data_custom)
@@ -262,13 +262,13 @@ def execute_train(args):
         batch_size=BATCH_SIZE, num_workers=2)
     
     print("Creating AutoEncoder model...")
-    model = my_torch.AutoEncoder(device='cuda')
+    model = energizer.AutoEncoder(device='cuda')
     
     print(f"Model has {sum(p.data.size for p in model.parameters())} parameters")
     
     # Create custom optimizer
     print("Creating Adam optimizer...")
-    optimizer = my_torch.Adam(model.parameters(), lr=LEARNING_RATE)
+    optimizer = energizer.Adam(model.parameters(), lr=LEARNING_RATE)
     
     # Create custom MSE loss function
     def mse_loss_custom(pred, target):
@@ -288,7 +288,7 @@ def execute_train(args):
 
     save_model_weights(model, "autoencoder_weights.npz")
 
-    model = my_torch.AutoEncoder()
+    model = energizer.AutoEncoder()
     print("Loading model weights...")
     load_model_weights(model, "autoencoder_weights.npz")
     print("Model loaded successfully")
@@ -299,7 +299,7 @@ def execute_train(args):
     print("Model evaluated successfully")
 
 def main():
-    parser = argparse.ArgumentParser(prog="my_torch_analyzer")
+    parser = argparse.ArgumentParser(prog="energizer_analyzer")
     exec_mode = parser.add_mutually_exclusive_group(required=True)
     exec_mode.add_argument(
         '--train',

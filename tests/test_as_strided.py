@@ -1,5 +1,5 @@
 """
-Tests comparing my_torch as_strided with PyTorch as_strided.
+Tests comparing energizer as_strided with PyTorch as_strided.
 Tests various shapes, strides, and storage_offset configurations.
 """
 import unittest
@@ -8,9 +8,9 @@ import torch
 import sys
 import os
 
-# Add parent directory to path to import my_torch
+# Add parent directory to path to import energizer
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import my_torch
+import energizer
 
 
 class TestAsStrided(unittest.TestCase):
@@ -22,7 +22,7 @@ class TestAsStrided(unittest.TestCase):
         torch.manual_seed(42)
     
     def assert_tensors_close(self, my_tensor, torch_tensor, msg=""):
-        """Helper to compare my_torch tensor with PyTorch tensor"""
+        """Helper to compare energizer tensor with PyTorch tensor"""
         # Convert PyTorch tensor to numpy if needed
         if isinstance(torch_tensor, torch.Tensor):
             torch_data = torch_tensor.detach().numpy()
@@ -39,7 +39,7 @@ class TestAsStrided(unittest.TestCase):
         )
     
     def assert_tensors_equal(self, my_tensor, torch_tensor, msg=""):
-        """Helper to compare my_torch tensor with PyTorch tensor (exact match for integers)"""
+        """Helper to compare energizer tensor with PyTorch tensor (exact match for integers)"""
         # Convert PyTorch tensor to numpy if needed
         if isinstance(torch_tensor, torch.Tensor):
             torch_data = torch_tensor.detach().numpy()
@@ -59,13 +59,13 @@ class TestAsStrided(unittest.TestCase):
         """Test basic as_strided: (2, 3) -> (2, 2) with strides (1, 2)"""
         # Create input tensors
         input_data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided
         shape = (2, 2)
         strides = (1, 2)
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -75,13 +75,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided: (3, 3) -> (2, 2) with different strides"""
         # Create input tensors
         input_data = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided
         shape = (2, 2)
         strides = (3, 1)  # Skip rows, step through columns
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -93,13 +93,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with 1D output shape"""
         # Create input tensors
         input_data = np.array([1, 2, 3, 4, 5, 6], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided to get every other element
         shape = (3,)
         strides = (2,)
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -109,13 +109,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with 3D output shape"""
         # Create input tensors
         input_data = np.arange(24, dtype=np.int64).reshape(4, 3, 2)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided
         shape = (2, 2, 2)
         strides = (6, 2, 1)  # Stride through the 3D array
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -125,14 +125,14 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with output shape that repeats elements (valid bounds)"""
         # Create input tensors with enough data
         input_data = np.array([[1, 2, 3, 4], [5, 6, 7, 8]], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided to create a view that repeats elements but stays in bounds
         # This creates a view that reads the same row twice
         shape = (2, 2)
         strides = (0, 1)  # Zero stride repeats the first row
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -144,13 +144,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with large strides (skipping elements)"""
         # Create input tensors
         input_data = np.arange(20, dtype=np.int64).reshape(4, 5)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided with large strides
         shape = (2, 2)
         strides = (10, 2)  # Skip rows and columns
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -160,13 +160,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with zero stride (broadcasting)"""
         # Create input tensors
         input_data = np.array([1, 2, 3], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided with zero stride to repeat elements
         shape = (3, 3)
         strides = (0, 1)  # Zero stride repeats rows
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -178,14 +178,14 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with storage_offset"""
         # Create input tensors
         input_data = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided with storage_offset
         shape = (2, 2)
         strides = (3, 1)
         storage_offset = 1  # Start from index 1
-        my_output = my_torch.as_strided(my_input, shape, strides, storage_offset)
+        my_output = energizer.as_strided(my_input, shape, strides, storage_offset)
         torch_output = torch.as_strided(torch_input, shape, strides, storage_offset)
         
         # Compare outputs
@@ -195,14 +195,14 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with storage_offset on 2D input"""
         # Create input tensors
         input_data = np.arange(12, dtype=np.int64).reshape(3, 4)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided with storage_offset
         shape = (2, 2)
         strides = (4, 1)
         storage_offset = 2  # Start from element at flat index 2
-        my_output = my_torch.as_strided(my_input, shape, strides, storage_offset)
+        my_output = energizer.as_strided(my_input, shape, strides, storage_offset)
         torch_output = torch.as_strided(torch_input, shape, strides, storage_offset)
         
         # Compare outputs
@@ -214,13 +214,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with floating point data"""
         # Create input tensors
         input_data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided
         shape = (2, 2)
         strides = (1, 2)
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -230,13 +230,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with random floating point data"""
         # Create input tensors
         input_data = np.random.randn(4, 5).astype(np.float32)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided
         shape = (3, 3)
         strides = (5, 1)
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -248,13 +248,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided returning a single element"""
         # Create input tensors
         input_data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided to get single element
         shape = (1, 1)
         strides = (3, 1)
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -264,13 +264,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided with same shape as input"""
         # Create input tensors
         input_data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided with same shape
         shape = (2, 3)
         strides = (3, 1)  # Normal row-major strides
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs
@@ -280,13 +280,13 @@ class TestAsStrided(unittest.TestCase):
         """Test as_strided to create transpose-like view"""
         # Create input tensors
         input_data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int64)
-        my_input = my_torch.Tensor(input_data)
+        my_input = energizer.Tensor(input_data)
         torch_input = torch.tensor(input_data)
         
         # Apply as_strided to transpose (swap strides)
         shape = (3, 2)
         strides = (1, 2)  # Transposed strides
-        my_output = my_torch.as_strided(my_input, shape, strides)
+        my_output = energizer.as_strided(my_input, shape, strides)
         torch_output = torch.as_strided(torch_input, shape, strides)
         
         # Compare outputs

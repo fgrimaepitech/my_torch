@@ -1,9 +1,10 @@
 bin/
 build/
 dist/
-my_torch/__pycache__/
-my_torch_generator
-my_torch_analyzer
+data/
+energizer/__pycache__/
+energizer_generator
+energizer_analyzer
 *.spec
 *.pyc
 dataset/
@@ -11,3 +12,4 @@ dataset/
 ./*/.DS_Store
 *.png
 *.npz
+src/test_*.py

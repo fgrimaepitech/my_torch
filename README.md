@@ -1,4 +1,4 @@
-my_torch is better than pytorch lol.
+Energizer (formerly `energizer`) – custom PyTorch-like library for the Neural Engine
 
 ## Need to Implement:
 

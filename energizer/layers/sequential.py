@@ -15,3 +15,8 @@ class Sequential(Module):
             x = layer(x)
             print(f"[Sequential] After  layer {idx} ({layer.__class__.__name__})")
         return x
+
+    def to(self, device: str):
+        for layer in self.layers:
+            layer.to(device)
+        return self

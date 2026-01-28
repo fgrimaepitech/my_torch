@@ -3,7 +3,7 @@ import energizer
 from energizer.tensor import Tensor
 
 class AutoEncoder(Module):
-    def __init__(self, device: str = 'cuda'):
+    def __init__(self, device: str = 'cpu'):
         super().__init__()
         self.device = device
         self.encoder = energizer.Sequential(
@@ -35,15 +35,18 @@ class AutoEncoder(Module):
         self.add_module('decoder', self.decoder)
 
     def forward(self, x: Tensor) -> Tensor:
-        print("x shape in encoder", x.data.shape)
         x = self.encoder(x)
-        print("x shape in decoder", x.data.shape)
         x = self.decoder(x)
-        print("x shape in the final result", x.data.shape)
         return x
 
     def train(self, mode: bool = True):
         self.encoder.train(mode)
         self.decoder.train(mode)
+        return self
+
+    def to(self, device: str):
+        self.device = device
+        self.encoder.to(device)
+        self.decoder.to(device)
         return self
         

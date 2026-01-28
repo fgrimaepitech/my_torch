@@ -1,22 +1,26 @@
 from energizer import tensor
-from energizer.neural_network import Module
+from energizer.neural_network import Module, Parameter
 import numpy as np
+import mlx.core as mx
 
 class Linear(Module):
-    def __init__(self, in_features, out_features, bias=True, device: str = 'cuda'):
+    def __init__(self, in_features, out_features, bias=True, device: str = 'cpu'):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.bias = bias
-        self.weight = tensor(np.random.randn(out_features, in_features) * 0.01, requires_grad=True)
+        self.device = device
+        if device == 'gpu':
+            self.weight = Parameter(mx.random.normal(shape=(out_features, in_features)) * 0.01, requires_grad=True, device=device)
+        else:
+            self.weight = Parameter(np.random.randn(out_features, in_features) * 0.01, requires_grad=True, device=device)
         if bias:
-            self.bias = tensor(np.zeros(out_features), requires_grad=True)
+            if device == 'gpu':
+                self.bias = Parameter(mx.zeros(out_features), requires_grad=True, device=device)
+            else:
+                self.bias = Parameter(np.zeros(out_features), requires_grad=True, device=device)
         else:
             self.bias = None
-
-        self._parameters['weight'] = self.weight
-        if self.bias is not None:
-            self._parameters['bias'] = self.bias
 
     def forward(self, x):
         result = x @ self.weight.T
@@ -24,15 +28,5 @@ class Linear(Module):
             result = result + self.bias
         return result
 
-    def parameters(self):
-        params = [self.weight]
-        if self.bias is not None:
-            params.append(self.bias)
-        return params
-
     def extra_repr(self):
         return f"in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}"
-
-    def reset_parameters(self):
-        self.weight = tensor(np.random.randn(self.out_features, self.in_features) * 0.01, requires_grad=True)
-        self.bias = tensor(np.zeros(self.out_features), requires_grad=True)

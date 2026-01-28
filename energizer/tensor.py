@@ -106,7 +106,22 @@ class Tensor:
                 return other.cpu().data
             elif self.device == 'gpu':
                 return other.gpu().data
-        return other.data
+        # Handle MLX arrays and numpy arrays directly
+        elif isinstance(other, mx.array):
+            if self.device == 'cpu':
+                return np.array(other)
+            else:
+                return other
+        elif isinstance(other, np.ndarray):
+            if self.device == 'gpu':
+                return mx.array(other)
+            else:
+                return other
+        # Fallback: try to access .data if it exists
+        elif hasattr(other, 'data'):
+            return other.data
+        else:
+            return other
 
     def requires_grad_(self, requires_grad: bool = True):
         self.requires_grad = requires_grad
@@ -205,6 +220,13 @@ class Tensor:
             result = np.mean(self.data, axis=dim)
         return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.mean_backward, [self, dim]), device=self.device)
 
+    def reshape(self, shape: tuple) -> 'Tensor':
+        if isinstance(self.data, mx.array):
+            result = self.data.reshape(shape)
+        else:
+            result = self.data.reshape(shape)
+        return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.reshape_backward, [self, shape]), device=self.device)
+
     @staticmethod
     def randn(*args, device: str = 'cpu', **kwargs):
         if device == 'gpu':
@@ -230,17 +252,21 @@ class Tensor:
             data = np.ones(shape)
         return Tensor(data, requires_grad=False, device=device)
 
-    def backward(self, grad_outputs: Optional[Tensor] = None):
+    def backward(self, grad_outputs = None):
         if grad_outputs is None:
             if isinstance(self.data, mx.array):
-                grad_outputs = mx.ones_like(self.data)
+                grad_outputs = Tensor(mx.ones_like(self.data), device=self.device)
             else:
-                grad_outputs = np.ones_like(self.data)
-            grad_outputs = Tensor(np.ones_like(self.data), device=self.device)
-        if self.requires_grad and self.grad_fn is not None:
-            if self.device != grad_outputs.device:
+                grad_outputs = Tensor(np.ones_like(self.data), device=self.device)
+        else:
+            # Convert numpy/mx array to Tensor if needed
+            if not isinstance(grad_outputs, Tensor):
+                grad_outputs = Tensor(grad_outputs, device=self.device)
+            # Ensure grad_outputs is on the same device as self
+            elif self.device != grad_outputs.device:
                 grad_outputs = grad_outputs.to(self.device)
-
+        
+        if self.requires_grad and self.grad_fn is not None:
             self.grad_fn.backward([grad_outputs])
     
 

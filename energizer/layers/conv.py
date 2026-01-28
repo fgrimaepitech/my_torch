@@ -1,7 +1,8 @@
 from energizer.function import Function
-from energizer.neural_network import Module
+from energizer.neural_network import Module, Parameter
 from energizer.tensor import Tensor
 import numpy as np
+import mlx.core as mx
 import energizer.functionnal as F
 import energizer.derivatives as dv
 
@@ -13,22 +14,25 @@ class ConvNd(Module):
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
-        std = np.sqrt(2.0 / (in_channels * kernel_size))
-        self.weight = Tensor(np.random.randn(out_channels, in_channels, kernel_size) * std, requires_grad=True)
+        if self.device == 'gpu':
+            std = mx.sqrt(2.0 / (in_channels * kernel_size))
+            self.weight = Parameter(mx.random.normal(shape=(out_channels, in_channels, kernel_size)), requires_grad=True, device=self.device)
+        else:
+            std = np.sqrt(2.0 / (in_channels * kernel_size))
+            self.weight = Parameter(np.random.randn(out_channels, in_channels, kernel_size) * std, requires_grad=True, device=self.device)
         if bias:
-            self.bias = Tensor(np.zeros(out_channels), requires_grad=True)
+            if self.device == 'gpu':
+                self.bias = Parameter(mx.zeros(out_channels), requires_grad=True, device=self.device)
+            else:
+                self.bias = Parameter(np.zeros(out_channels), requires_grad=True, device=self.device)
         else:
             self.bias = None
-
+        self._parameters['weight'] = self.weight
+        if self.bias is not None:
+            self._parameters['bias'] = self.bias
 
     def forward(self) -> Tensor:
         pass
-
-    def parameters(self):
-        params = [self.weight]
-        if self.bias is not None:
-            params.append(self.bias)
-        return params
 
 
 class Conv1d(ConvNd):
@@ -85,11 +89,11 @@ class Conv1d(ConvNd):
 
         return Tensor(unfolded_data, requires_grad=input.requires_grad)
 
-    def parameters(self):
-        params = [self.weight]
+    def to(self, device: str):
+        self.weight = self.weight.to(device)
         if self.bias is not None:
-            params.append(self.bias)
-        return params
+            self.bias = self.bias.to(device)
+        return self
 
 class Conv2d(Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: tuple, stride: tuple = (1, 1), padding: tuple = (0, 0), bias: bool = True):
@@ -100,13 +104,17 @@ class Conv2d(Module):
         self.stride = stride if isinstance(stride, tuple) else (stride, stride)
         self.padding = padding if isinstance(padding, tuple) else (padding, padding)
 
-        std = np.sqrt(2.0 / (in_channels * self.kernel_size[0] * self.kernel_size[1]))
-        self.weight = Tensor(
-            np.random.randn(out_channels, in_channels, self.kernel_size[0], self.kernel_size[1]) * std,
-            requires_grad=True
-        )
+        if self.device == 'gpu':
+            std = mx.sqrt(2.0 / (in_channels * self.kernel_size[0] * self.kernel_size[1]))
+            self.weight = Parameter(mx.random.normal(shape=(out_channels, in_channels, self.kernel_size[0], self.kernel_size[1])), requires_grad=True, device=self.device)
+        else:
+            std = np.sqrt(2.0 / (in_channels * self.kernel_size[0] * self.kernel_size[1]))
+            self.weight = Parameter(np.random.randn(out_channels, in_channels, self.kernel_size[0], self.kernel_size[1]) * std, requires_grad=True, device=self.device)    
         if bias:
-            self.bias = Tensor(np.zeros(out_channels), requires_grad=True)
+            if self.device == 'gpu':
+                self.bias = Parameter(mx.zeros(out_channels), requires_grad=True, device=self.device)
+            else:
+                self.bias = Parameter(np.zeros(out_channels), requires_grad=True, device=self.device)
         else:
             self.bias = None
 
@@ -123,18 +131,28 @@ class Conv2d(Module):
 
         windows = self._im2col(input, kh, kw, sh, sw, out_height, out_width)
 
-        weight_reshaped = self.weight.data.reshape(self.out_channels, -1)
+        if input.device == 'gpu':
+            weight_reshaped = input.mlx().__class__(self.weight.data.reshape(self.out_channels, -1))
 
-        result = np.zeros((batch_size, out_height * out_width, self.out_channels))
-        for b in range(batch_size):
-            result[b] = windows[b] @ weight_reshaped.T
+            result = mx.zeros((batch_size, out_height * out_width, self.out_channels))
+            for b in range(batch_size):
+                result[b] = windows[b] @ weight_reshaped.T
+            result = result.transpose(0, 2, 1).reshape(batch_size, self.out_channels, out_height, out_width)
+            if self.bias is not None:
+                result += self.bias.data.reshape(1, -1, 1, 1)
+        else:
+            weight_reshaped = self.weight.data.reshape(self.out_channels, -1)   
 
-        result = result.transpose(0, 2, 1).reshape(batch_size, self.out_channels, out_height, out_width)
+            result = np.zeros((batch_size, out_height * out_width, self.out_channels))
+            for b in range(batch_size):
+                result[b] = windows[b] @ weight_reshaped.T
 
-        if self.bias is not None:
-            result += self.bias.data.reshape(1, -1, 1, 1)
+            result = result.transpose(0, 2, 1).reshape(batch_size, self.out_channels, out_height, out_width)
+
+            if self.bias is not None:
+                result += self.bias.data.reshape(1, -1, 1, 1)
             
-        return Tensor(result, requires_grad=input.requires_grad)
+        return Tensor(result, requires_grad=input.requires_grad, device=input.device)
 
 
     def _pad2d(self, x: Tensor, padding: tuple) -> Tensor:
@@ -144,11 +162,14 @@ class Conv2d(Module):
             return x
         padded_data = np.zeros((batch_size, channels, height + 2*ph, width + 2*pw))
         padded_data[:, :, ph:ph+height, pw:pw+width] = x.data
-        return Tensor(padded_data, requires_grad=x.requires_grad)
+        return Tensor(padded_data, requires_grad=x.requires_grad, device=x.device)
 
     def _im2col(self, x: Tensor, kh: int, kw: int, sh: int, sw: int, out_height: int, out_width: int):
         batch_size, channels, height, width = x.data.shape
-        unfolded_data = np.zeros((batch_size, out_height * out_width, channels * kh * kw))
+        if x.device == 'gpu':
+            unfolded_data = mx.zeros((batch_size, out_height * out_width, channels * kh * kw))
+        else:
+            unfolded_data = np.zeros((batch_size, out_height * out_width, channels * kh * kw))
 
         for b in range(batch_size):
             col_index = 0;
@@ -157,13 +178,11 @@ class Conv2d(Module):
                     h_start = i * sh
                     w_start = j * sw
                     window = x.data[b, :, h_start:h_start+kh, w_start:w_start+kw]
-                    unfolded_data[b, col_index] = window.ravel()
+                    if x.device == 'gpu':
+                        window_flat = window.reshape(-1)
+                    else:
+                        window_flat = window.ravel()
+                    unfolded_data[b, col_index] = window_flat
                     col_index += 1
 
         return unfolded_data
-
-    def parameters(self):
-        params = [self.weight]
-        if self.bias is not None:
-            params.append(self.bias)
-        return params

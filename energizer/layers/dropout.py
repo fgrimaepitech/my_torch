@@ -32,7 +32,3 @@ class Dropout(Module):
     def train(self):
         self.training = True
 
-    def parameters(self):
-        return []
-
-

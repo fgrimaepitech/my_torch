@@ -2,17 +2,47 @@ from __future__ import annotations
 from typing import Any
 import energizer.tensor as ts
 import numpy as np
+try:
+    import mlx.core as mx
+except ImportError:
+    mx = None
 
 def mul_backward(tensors: Any, grad_outputs: Any) -> Any:
+    # Extract grad data if it's a Tensor
+    grad_data = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+    
+    def get_data(t):
+        """Extract raw data from tensor or return as-is"""
+        if isinstance(t, (int, float)):
+            return t
+        elif isinstance(t, ts.Tensor):
+            return t.data
+        else:
+            return t
+    
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
-        tensors[0].grad = grad_outputs[0] * (tensors[1] if isinstance(tensors[1], (int, float)) else tensors[1].data)
+        other_data = get_data(tensors[1])
+        # Multiply gradients, ensuring device compatibility
+        if mx and (isinstance(grad_data, mx.array) or isinstance(other_data, mx.array)):
+            grad_mx = grad_data if isinstance(grad_data, mx.array) else mx.array(grad_data)
+            other_mx = other_data if isinstance(other_data, mx.array) else mx.array(other_data) if isinstance(other_data, np.ndarray) else other_data
+            tensors[0].grad = np.array(grad_mx * other_mx)  # Store as numpy for .grad
+        else:
+            tensors[0].grad = grad_data * other_data
         tensors[0].backward(tensors[0].grad)
     if isinstance(tensors[1], ts.Tensor) and tensors[1].requires_grad:
-        tensors[1].grad = grad_outputs[0] * (tensors[0] if isinstance(tensors[0], (int, float)) else tensors[0].data)
+        other_data = get_data(tensors[0])
+        # Multiply gradients, ensuring device compatibility
+        if mx and (isinstance(grad_data, mx.array) or isinstance(other_data, mx.array)):
+            grad_mx = grad_data if isinstance(grad_data, mx.array) else mx.array(grad_data)
+            other_mx = other_data if isinstance(other_data, mx.array) else mx.array(other_data) if isinstance(other_data, np.ndarray) else other_data
+            tensors[1].grad = np.array(grad_mx * other_mx)  # Store as numpy for .grad
+        else:
+            tensors[1].grad = grad_data * other_data
         tensors[1].backward(tensors[1].grad)
     else:
-        return grad_outputs[0] * tensors[1]
-    return grad_outputs[0] * tensors[0]
+        return grad_data * get_data(tensors[1])
+    return grad_data * get_data(tensors[0])
 
 def add_backward(tensors: Any, grad_outputs: Any) -> Any:
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
@@ -209,3 +239,9 @@ def item_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[0].grad = grad_outputs[0]
         tensors[0].backward(tensors[0].grad)
     return grad_outputs[0]
+
+def reshape_backward(tensors: Any, grad_outputs: Any) -> Any:
+    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
+        tensors[0].grad = grad_outputs[0].reshape(tensors[0].data.shape)
+        tensors[0].backward(tensors[0].grad)
+    return grad_outputs[0].reshape(tensors[0].data.shape)

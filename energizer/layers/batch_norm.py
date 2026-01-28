@@ -103,7 +103,4 @@ class BatchNorm2d(Module):
 
     def train(self):
         self.training = True
-
-    def parameters(self):
-        return [self.gamma, self.beta]
             

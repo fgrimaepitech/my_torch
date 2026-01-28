@@ -2,18 +2,25 @@
 from ast import Dict, List
 from typing import Callable, Any
 
+from energizer.tensor import Tensor
+
 
 class Module:
-    def __init__(self):
-        # Avoid naming collision with the parameters() method
+    def __init__(self, device: str = 'cpu'):
         self._parameters = {}
         self._modules = {}
+        self.device = device
 
     def forward(self, x):
         raise NotImplementedError
 
     def __call__(self, x):
         return self.forward(x)
+
+    def __setattr__(self, name, value):
+        if isinstance(value, Parameter):
+            self._parameters[name] = value
+        self.__dict__[name] = value
 
     def backward(self, x):
         raise NotImplementedError
@@ -53,6 +60,13 @@ class Module:
 
         return params
 
+    def reset_parameters(self):
+        for param in self._parameters.values():
+            if param.requires_grad:
+                param.data.zero_()
+        for module in self._modules.values():
+            module.reset_parameters()
+
     def state_dict(self):
         state = {}
 
@@ -84,6 +98,11 @@ class Module:
         import numpy as np
         state_dict = self.state_dict()
         np.savez(filepath, **state_dict)
+
+    def to(self, device: str):
+        for module in self._modules.values():
+            module.to(device)
+        return self
 
     @classmethod
     def load(cls, filepath):
@@ -176,3 +195,6 @@ class Optimizer:
             for param in param_group['params']:
                 if param.grad is not None:
                     param.grad.data.zero_()
+
+class Parameter(Tensor):
+    pass

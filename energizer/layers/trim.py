@@ -15,6 +15,3 @@ class Trim(Module):
         w_end = -self.end if self.end != 0 else None
         trimmed = x.data[:, :, h_start:h_end, w_start:w_end]
         return Tensor(trimmed, requires_grad=x.requires_grad)
-
-    def parameters(self):
-        return []

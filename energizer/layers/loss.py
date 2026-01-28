@@ -8,6 +8,3 @@ class MSELoss(Module):
 
     def forward(self, x: Tensor, y: Tensor) -> Tensor:
         return ((x - y) ** 2).mean()
-
-    def parameters(self):
-        return []

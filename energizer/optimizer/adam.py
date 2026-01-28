@@ -15,7 +15,6 @@ class Adam(Optimizer):
             else:
                 params = [{'params': list(params)}]
         super().__init__(params, defaults)
-        # Initialize state for each parameter
         for group in self.param_groups:
             for p in group['params']:
                 self.state[p] = {
@@ -59,21 +58,13 @@ class Adam(Optimizer):
                 if p.grad is None:
                     continue
 
-                print("after p grad is not None: ", p.grad)
-
                 grad = p.grad.data if hasattr(p.grad, 'data') else p.grad
-
-                print("grad: ", grad)
 
                 if maximize:
                     grad = -grad
 
-                print("after grad is not None: ", grad)
-
                 if weight_decay != 0:
                     grad = grad + weight_decay * p.data
-
-                print("after weight_decay is not 0: ", grad)
 
                 state = self.state[p]
                 state['step'] += 1
@@ -92,8 +83,6 @@ class Adam(Optimizer):
                     denom = np.sqrt(state['max_exp_avg_sq']) + eps
                 else:
                     denom = np.sqrt(exp_avg_sq_hat) + eps
-
-                print("value for p.data update: ", (lr * exp_avg_hat / denom))
 
                 p.data -= lr * exp_avg_hat / denom
 

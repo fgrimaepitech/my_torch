@@ -20,9 +20,6 @@ class ResidualBlock(Module):
         out = energizer.ReLU()(out)
         return out
 
-    def parameters(self):
-        return [self.conv1.weight, self.conv1.bias, self.conv2.weight, self.conv2.bias, self.bn1.gamma, self.bn1.beta, self.bn2.gamma, self.bn2.beta]
-
 
 class BottleneckBlock(Module):
     def __init__(self, in_channels: int, out_channels: int, stride: int = 1):
@@ -67,6 +64,3 @@ class BottleneckBlock(Module):
         out = energizer.ReLU()(out)
 
         return out
-
-    def parameters(self):
-        return [self.conv1.weight, self.conv1.bias, self.bn1.gamma, self.bn1.beta, self.conv2.weight, self.conv2.bias, self.bn2.gamma, self.bn2.beta, self.conv3.weight, self.conv3.bias, self.bn3.gamma, self.bn3.beta]

@@ -32,18 +32,38 @@ class SGD(Optimizer):
             weight_decay = group['weight_decay']
 
             for p in group['params']:
-                if p.grad is not None:
+                if p.grad is None:
                     continue
 
-                grad = p.grad
+                grad = p.grad.data if hasattr(p.grad, 'data') else p.grad
+                
+                p_data = p.data
+                is_mlx = hasattr(p_data, '__class__') and 'mlx' in str(type(p_data))
+                
+                if is_mlx:
+                    try:
+                        import mlx.core as mx
+                        if not (hasattr(grad, '__class__') and 'mlx' in str(type(grad))):
+                            grad = mx.array(np.array(grad))
+                    except ImportError:
+                        grad = np.array(grad)
+                else:
+                    if not isinstance(grad, np.ndarray):
+                        grad = np.array(grad)
 
                 if weight_decay != 0:
                     grad = grad + weight_decay * p.data
 
                 if momentum != 0:
+                    if p not in self.state:
+                        self.state[p] = {}
                     param_state = self.state[p]
                     if 'momentum_buffer' not in param_state:
-                        buf = param_state['momentum_buffer'] = np.zeros_like(p.data)
+                        if is_mlx:
+                            import mlx.core as mx
+                            buf = param_state['momentum_buffer'] = mx.zeros_like(p_data)
+                        else:
+                            buf = param_state['momentum_buffer'] = np.zeros_like(p_data)
                     else:
                         buf = param_state['momentum_buffer']
                     buf = momentum * buf + (1 - dampening) * grad
@@ -52,7 +72,7 @@ class SGD(Optimizer):
                         grad = grad + momentum * buf
                     else:
                         grad = buf
-                p.data = p.data - lr * grad
+                p.data = p_data - lr * grad
         return loss
 
     

@@ -7,8 +7,34 @@ try:
 except ImportError:
     mx = None
 
+def _reduce_grad_to_shape(grad: Any, shape: tuple) -> Any:
+    if shape == ():
+        if mx and isinstance(grad, mx.array):
+            return mx.sum(grad)
+        return np.sum(grad)
+
+    is_mlx = mx and isinstance(grad, mx.array)
+
+    g = grad
+    while len(getattr(g, "shape", ())) > len(shape):
+        if is_mlx:
+            g = mx.sum(g, axis=0)
+        else:
+            g = np.sum(g, axis=0)
+
+    for axis, (gdim, tdim) in enumerate(zip(g.shape, shape)):
+        if tdim == 1 and gdim != 1:
+            if is_mlx:
+                g = mx.sum(g, axis=axis, keepdims=True)
+            else:
+                g = np.sum(g, axis=axis, keepdims=True)
+
+    try:
+        return g.reshape(shape)
+    except Exception:
+        return g
+
 def mul_backward(tensors: Any, grad_outputs: Any) -> Any:
-    # Extract grad data if it's a Tensor
     grad_data = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
     
     def get_data(t):
@@ -22,17 +48,15 @@ def mul_backward(tensors: Any, grad_outputs: Any) -> Any:
     
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
         other_data = get_data(tensors[1])
-        # Multiply gradients, ensuring device compatibility
         if mx and (isinstance(grad_data, mx.array) or isinstance(other_data, mx.array)):
             grad_mx = grad_data if isinstance(grad_data, mx.array) else mx.array(grad_data)
             other_mx = other_data if isinstance(other_data, mx.array) else mx.array(other_data) if isinstance(other_data, np.ndarray) else other_data
-            tensors[0].grad = np.array(grad_mx * other_mx)  # Store as numpy for .grad
+            tensors[0].grad = np.array(grad_mx * other_mx)
         else:
             tensors[0].grad = grad_data * other_data
         tensors[0].backward(tensors[0].grad)
     if isinstance(tensors[1], ts.Tensor) and tensors[1].requires_grad:
         other_data = get_data(tensors[0])
-        # Multiply gradients, ensuring device compatibility
         if mx and (isinstance(grad_data, mx.array) or isinstance(other_data, mx.array)):
             grad_mx = grad_data if isinstance(grad_data, mx.array) else mx.array(grad_data)
             other_mx = other_data if isinstance(other_data, mx.array) else mx.array(other_data) if isinstance(other_data, np.ndarray) else other_data
@@ -46,10 +70,12 @@ def mul_backward(tensors: Any, grad_outputs: Any) -> Any:
 
 def add_backward(tensors: Any, grad_outputs: Any) -> Any:
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
-        tensors[0].grad = grad_outputs[0]
+        grad0 = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+        tensors[0].grad = _reduce_grad_to_shape(grad0, tensors[0].data.shape)
         tensors[0].backward(tensors[0].grad)
     if isinstance(tensors[1], ts.Tensor) and tensors[1].requires_grad:
-        tensors[1].grad = grad_outputs[0]
+        grad1 = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+        tensors[1].grad = _reduce_grad_to_shape(grad1, tensors[1].data.shape)
         tensors[1].backward(tensors[1].grad)
     else:
         return grad_outputs[0]
@@ -57,10 +83,12 @@ def add_backward(tensors: Any, grad_outputs: Any) -> Any:
 
 def sub_backward(tensors: Any, grad_outputs: Any) -> Any:
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
-        tensors[0].grad = grad_outputs[0]
+        grad0 = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+        tensors[0].grad = _reduce_grad_to_shape(grad0, tensors[0].data.shape)
         tensors[0].backward(tensors[0].grad)
     if isinstance(tensors[1], ts.Tensor) and tensors[1].requires_grad:
-        tensors[1].grad = -grad_outputs[0]
+        grad1 = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+        tensors[1].grad = _reduce_grad_to_shape(-grad1, tensors[1].data.shape)
         tensors[1].backward(tensors[1].grad)
     else:
         return -grad_outputs[0]
@@ -123,6 +151,32 @@ def mean_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[0].grad = np.broadcast_to(grad_data / tensors[0].data.size, tensors[0].data.shape).copy()
         tensors[0].backward(tensors[0].grad)
     return grad_data / tensors[0].data.size
+
+def sigmoid_backward(tensors: Any, grad_outputs: Any) -> Any:
+    """
+    Backward for sigmoid(x).
+
+    `tensors` is expected to be [x, y] where y = sigmoid(x) (raw array).
+    """
+    x = tensors[0]
+    y = tensors[1]
+    grad = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+
+    # dy/dx = y * (1 - y)
+    if mx and (isinstance(grad, mx.array) or isinstance(y, mx.array)):
+        grad_mx = grad if isinstance(grad, mx.array) else mx.array(grad)
+        y_mx = y if isinstance(y, mx.array) else mx.array(y)
+        grad_x = grad_mx * (y_mx * (1 - y_mx))
+    else:
+        grad_np = np.array(grad) if not isinstance(grad, np.ndarray) else grad
+        y_np = np.array(y) if not isinstance(y, np.ndarray) else y
+        grad_x = grad_np * (y_np * (1 - y_np))
+
+    if isinstance(x, ts.Tensor) and x.requires_grad:
+        x.grad = grad_x
+        x.backward(x.grad)
+
+    return grad_x
 
 def as_strided_backward(tensors: Any, grad_outputs: Any) -> Any:
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
@@ -245,3 +299,18 @@ def reshape_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[0].grad = grad_outputs[0].reshape(tensors[0].data.shape)
         tensors[0].backward(tensors[0].grad)
     return grad_outputs[0].reshape(tensors[0].data.shape)
+
+def transpose_backward(tensors: Any, grad_outputs: Any) -> Any:
+    grad_data = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
+        tensors[0].grad = grad_data.T
+    else:
+        try:
+            import mlx.core as mx
+            if isinstance(grad_data, mx.array):
+                tensors[0].grad = mx.transpose(grad_data)
+            else:
+                tensors[0].grad = np.transpose(grad_data)
+        except ImportError:
+            tensors[0].grad = np.transpose(grad_data)
+    return tensors[0].grad.T if hasattr(tensors[0], 'grad') else tensors[0].grad

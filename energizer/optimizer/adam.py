@@ -17,13 +17,24 @@ class Adam(Optimizer):
         super().__init__(params, defaults)
         for group in self.param_groups:
             for p in group['params']:
+                p_data = p.data
+                if hasattr(p_data, '__class__') and 'mlx' in str(type(p_data)):
+                    import mlx.core as mx
+                    exp_avg = mx.zeros_like(p_data)
+                    exp_avg_sq = mx.zeros_like(p_data)
+                    max_exp_avg_sq = mx.zeros_like(p_data) if group['amsgrad'] else None
+                else:
+                    exp_avg = np.zeros_like(p_data)
+                    exp_avg_sq = np.zeros_like(p_data)
+                    max_exp_avg_sq = np.zeros_like(p_data) if group['amsgrad'] else None
+                
                 self.state[p] = {
                     'step': 0,
-                    'exp_avg': np.zeros_like(p.data),
-                    'exp_avg_sq': np.zeros_like(p.data)
+                    'exp_avg': exp_avg,
+                    'exp_avg_sq': exp_avg_sq
                 }
                 if group['amsgrad']:
-                    self.state[p]['max_exp_avg_sq'] = np.zeros_like(p.data)
+                    self.state[p]['max_exp_avg_sq'] = max_exp_avg_sq
 
     def __setstate__(self, state):
         super().__setstate__(state)
@@ -59,12 +70,20 @@ class Adam(Optimizer):
                     continue
 
                 grad = p.grad.data if hasattr(p.grad, 'data') else p.grad
+                
+                p_data = p.data
+                is_mlx = hasattr(p_data, '__class__') and 'mlx' in str(type(p_data))
+                if is_mlx and not (hasattr(grad, '__class__') and 'mlx' in str(type(grad))):
+                    import mlx.core as mx
+                    grad = mx.array(grad)
+                elif not is_mlx and (hasattr(grad, '__class__') and 'mlx' in str(type(grad))):
+                    grad = np.array(grad)
 
                 if maximize:
                     grad = -grad
 
                 if weight_decay != 0:
-                    grad = grad + weight_decay * p.data
+                    grad = grad + weight_decay * p_data
 
                 state = self.state[p]
                 state['step'] += 1
@@ -79,11 +98,20 @@ class Adam(Optimizer):
                 exp_avg_sq_hat = state['exp_avg_sq'] / bias_correction2
 
                 if amsgrad:
-                    state['max_exp_avg_sq'] = np.maximum(state['max_exp_avg_sq'], exp_avg_sq_hat)
-                    denom = np.sqrt(state['max_exp_avg_sq']) + eps
+                    if is_mlx:
+                        import mlx.core as mx
+                        state['max_exp_avg_sq'] = mx.maximum(state['max_exp_avg_sq'], exp_avg_sq_hat)
+                        denom = mx.sqrt(state['max_exp_avg_sq']) + eps
+                    else:
+                        state['max_exp_avg_sq'] = np.maximum(state['max_exp_avg_sq'], exp_avg_sq_hat)
+                        denom = np.sqrt(state['max_exp_avg_sq']) + eps
                 else:
-                    denom = np.sqrt(exp_avg_sq_hat) + eps
+                    if is_mlx:
+                        import mlx.core as mx
+                        denom = mx.sqrt(exp_avg_sq_hat) + eps
+                    else:
+                        denom = np.sqrt(exp_avg_sq_hat) + eps
 
-                p.data -= lr * exp_avg_hat / denom
+                p.data = p_data - lr * exp_avg_hat / denom
 
         return loss

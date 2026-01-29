@@ -154,7 +154,7 @@ class Tensor:
         return Tensor(other / self.data, requires_grad=self.requires_grad, grad_fn=Function(dv.truediv_backward, [other, self]), device=self.device)
 
     def __matmul__(self, other: 'Tensor') -> 'Tensor':     
-        other_data = self._get_other_data(other)   
+        other_data = self._get_other_data(other)
         return Tensor(
             self.data @ other_data, 
             requires_grad=self.requires_grad or other.requires_grad,
@@ -189,7 +189,7 @@ class Tensor:
 
     @property
     def T(self) -> 'Tensor':
-        return Tensor(self.data.T, requires_grad=self.requires_grad)
+        return Tensor(self.data.T, requires_grad=self.requires_grad, grad_fn=Function(dv.transpose_backward, [self]), device=self.device)
 
     def size(self):
         return self.data.shape

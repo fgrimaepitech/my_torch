@@ -3,6 +3,11 @@ from ast import Dict, List
 from typing import Callable, Any
 
 from energizer.tensor import Tensor
+import numpy as np
+try:
+    import mlx.core as mx
+except ImportError:
+    mx = None
 
 
 class Module:
@@ -70,11 +75,19 @@ class Module:
     def state_dict(self):
         state = {}
 
+        def _to_numpy(arr):
+            # Ensure arrays are serializable via numpy (np.savez)
+            if mx is not None and isinstance(arr, mx.array):
+                return np.array(arr)
+            if isinstance(arr, np.ndarray):
+                return arr.copy()
+            return np.array(arr)
+
         def collect_params(module, prefix=""):
             for name, param in module._parameters.items():
                 if param is not None:
                     key = f"{prefix}{name}"
-                    state[key] = param.data.copy()
+                    state[key] = _to_numpy(param.data)
             for name, submodule in module._modules.items():
                 collect_params(submodule, f"{prefix}{name}.")
 
@@ -82,12 +95,20 @@ class Module:
         return state
 
     def load_state_dict(self, state_dict):
+        def _from_numpy(arr_np, device: str):
+            # Restore to the target device
+            if device == "gpu":
+                if mx is None:
+                    raise RuntimeError("Cannot load GPU weights because mlx is not available")
+                return mx.array(arr_np)
+            return np.array(arr_np)
+
         def load_params(module, prefix=""):
             for name, param in module._parameters.items():
                 if param is not None:
                     key = f"{prefix}{name}"
                     if key in state_dict:
-                        param.data = state_dict[key].copy()
+                        param.data = _from_numpy(state_dict[key], getattr(param, "device", "cpu"))
             
             for name, submodule in module._modules.items():
                 load_params(submodule, f"{prefix}{name}.")
@@ -193,8 +214,9 @@ class Optimizer:
     def zero_grad(self):
         for param_group in self.param_groups:
             for param in param_group['params']:
-                if param.grad is not None:
-                    param.grad.data.zero_()
+                # Gradients can be numpy arrays or Tensors. Simplest: set to None
+                # and let backward() recreate them fresh.
+                param.grad = None
 
 class Parameter(Tensor):
     pass

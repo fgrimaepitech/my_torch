@@ -162,6 +162,9 @@ class Tensor:
             device=self.device
         )
 
+    def __pow__(self, other: Union[int, float]) -> 'Tensor':
+        return Tensor(self.data ** other, requires_grad=self.requires_grad, grad_fn=Function(dv.pow_backward, [self, other]), device=self.device)
+
     def __rmatmul__(self, other: 'Tensor') -> 'Tensor':
         return self.__matmul__(other)
 

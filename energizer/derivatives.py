@@ -121,13 +121,25 @@ def truediv_backward(tensors: Any, grad_outputs: Any) -> Any:
 
 def matmul_backward(tensors: Any, grad_outputs: Any) -> Any:
     grad_data = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+    
+    def ensure_compatible(a, b):
+        if mx and isinstance(a, mx.array) and not isinstance(b, mx.array):
+            return a, mx.array(b)
+        elif mx and isinstance(b, mx.array) and not isinstance(a, mx.array):
+            return mx.array(a), b
+        return a, b
+    
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
-        tensors[0].grad = grad_data @ tensors[1].data.T
+        grad_compat, weight_T = ensure_compatible(grad_data, tensors[1].data.T)
+        tensors[0].grad = grad_compat @ weight_T
         tensors[0].backward(tensors[0].grad)
     if isinstance(tensors[1], ts.Tensor) and tensors[1].requires_grad:
-        tensors[1].grad = tensors[0].data.T @ grad_data
+        input_T, grad_compat = ensure_compatible(tensors[0].data.T, grad_data)
+        tensors[1].grad = input_T @ grad_compat
         tensors[1].backward(tensors[1].grad)
-    return grad_data @ tensors[1].data.T
+    
+    grad_compat, weight_T = ensure_compatible(grad_data, tensors[1].data.T)
+    return grad_compat @ weight_T
 
 def pow_backward(tensors: Any, grad_outputs: Any) -> Any:
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
@@ -276,10 +288,23 @@ def conv1d_grad_weight(grad_output: np.ndarray, x: 'ts.Tensor',
     return grad_weight
 
 def reshape_backward(tensors: Any, grad_outputs: Any) -> Any:
+    grad_data = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]
+    
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
-        tensors[0].grad = grad_outputs[0].reshape(tensors[0].data.shape)
+        if mx and isinstance(grad_data, mx.array):
+            tensors[0].grad = mx.reshape(grad_data, tensors[0].data.shape)
+        else:
+            if not isinstance(grad_data, np.ndarray):
+                grad_data = np.array(grad_data)
+            tensors[0].grad = grad_data.reshape(tensors[0].data.shape)
         tensors[0].backward(tensors[0].grad)
-    return grad_outputs[0].reshape(tensors[0].data.shape)
+    
+    if mx and isinstance(grad_data, mx.array):
+        return mx.reshape(grad_data, tensors[0].data.shape)
+    else:
+        if not isinstance(grad_data, np.ndarray):
+            grad_data = np.array(grad_data)
+        return grad_data.reshape(tensors[0].data.shape)
 
 def getitem_backward(tensors: Any, grad_outputs: Any) -> Any:
     if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
@@ -299,12 +324,6 @@ def item_backward(tensors: Any, grad_outputs: Any) -> Any:
         tensors[0].grad = grad_outputs[0]
         tensors[0].backward(tensors[0].grad)
     return grad_outputs[0]
-
-def reshape_backward(tensors: Any, grad_outputs: Any) -> Any:
-    if isinstance(tensors[0], ts.Tensor) and tensors[0].requires_grad:
-        tensors[0].grad = grad_outputs[0].reshape(tensors[0].data.shape)
-        tensors[0].backward(tensors[0].grad)
-    return grad_outputs[0].reshape(tensors[0].data.shape)
 
 def transpose_backward(tensors: Any, grad_outputs: Any) -> Any:
     grad_data = grad_outputs[0].data if isinstance(grad_outputs[0], ts.Tensor) else grad_outputs[0]

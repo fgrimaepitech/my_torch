@@ -230,6 +230,9 @@ class Tensor:
             result = self.data.reshape(shape)
         return Tensor(result, requires_grad=self.requires_grad, grad_fn=Function(dv.reshape_backward, [self, shape]), device=self.device)
 
+    def view(self, shape: tuple) -> 'Tensor':
+        return self.reshape(shape)
+
     @staticmethod
     def randn(*args, device: str = 'cpu', **kwargs):
         if device == 'gpu':

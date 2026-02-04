@@ -1,7 +1,8 @@
 from energizer.neural_network import Module
 from energizer.tensor import Tensor
+from energizer.function import Function
+import energizer.derivatives as dv
 import numpy as np
-import mlx.core as mx
 
 class Reshape(Module):
     def __init__(self, shape: tuple):
@@ -37,6 +38,6 @@ class Reshape(Module):
         return Tensor(
             reshaped_data,
             requires_grad=x.requires_grad,
-            grad_fn=x.grad_fn,
+            grad_fn=Function(dv.reshape_backward, [x]) if x.requires_grad else None,
             device=x.device
         )
